@@ -1,0 +1,14 @@
+# ============================================================
+# PRAGMATRIX 2026 — Email (SMTP) Configuration Template
+# ============================================================
+# Copy this file to email.properties and fill in your SMTP credentials.
+# For Gmail, use an App Password (not your main password).
+# See: https://support.google.com/accounts/answer/185833
+
+email.smtp.host=smtp.gmail.com
+email.smtp.port=587
+email.smtp.username=your-email@gmail.com
+email.smtp.password=your-app-password
+
+email.from.address=your-email@gmail.com
+email.from.name=PRAGMATRIX 2026

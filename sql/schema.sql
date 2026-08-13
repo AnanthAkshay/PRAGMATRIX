@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS teams (
     unique_id     VARCHAR(15)  PRIMARY KEY,
     quiz_code     VARCHAR(10)  NOT NULL,
     college_name  VARCHAR(150) NOT NULL,
+    lead_email    VARCHAR(150) NOT NULL,
     student1_name VARCHAR(100) NOT NULL,
     student2_name VARCHAR(100),
     student3_name VARCHAR(100),
@@ -84,6 +85,34 @@ CREATE TABLE IF NOT EXISTS scores (
         ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (entered_by) REFERENCES admins(admin_id)
         ON UPDATE SET NULL ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ------------------------------------------------------------
+-- OTPs issued for team dashboard login
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS team_login_otps (
+    otp_id         INT AUTO_INCREMENT PRIMARY KEY,
+    unique_id      VARCHAR(15)  NOT NULL,
+    otp_code       VARCHAR(6)   NOT NULL,
+    generated_at   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    expires_at     TIMESTAMP    NOT NULL,
+    is_used        BOOLEAN      DEFAULT FALSE,
+    attempt_count  INT          DEFAULT 0,
+    INDEX idx_otp_lookup (unique_id, is_used),
+    FOREIGN KEY (unique_id) REFERENCES teams(unique_id)
+        ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ------------------------------------------------------------
+-- Team dashboard sessions (server-side tracking)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS team_sessions (
+    session_id  VARCHAR(64)  PRIMARY KEY,
+    unique_id   VARCHAR(15)  NOT NULL,
+    created_at  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    expires_at  TIMESTAMP    NOT NULL,
+    FOREIGN KEY (unique_id) REFERENCES teams(unique_id)
+        ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 -- ------------------------------------------------------------

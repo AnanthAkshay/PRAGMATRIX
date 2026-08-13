@@ -84,6 +84,85 @@
             </div>
         </div>
 
+        <!-- ===== ADD TEAM (Admin-Only Registration) ===== -->
+        <div class="glass-panel mb-3">
+            <div class="d-flex justify-between align-center">
+                <h3 class="section-title mb-0">
+                    <span class="title-accent">&#9830;</span> Add Team
+                </h3>
+                <button type="button" class="btn btn-outline btn-sm" onclick="toggleAddTeam()" id="btn-toggle-add-team">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Team
+                </button>
+            </div>
+
+            <div id="add-team-form-section" style="display: none; margin-top: 1.25rem;">
+                <form action="${pageContext.request.contextPath}/register" method="POST" id="admin-register-form" novalidate>
+
+                    <div class="card-grid" style="grid-template-columns: 1fr 1fr;">
+                        <!-- Quiz Selection -->
+                        <div class="form-group">
+                            <label class="form-label">Select Event <span class="required">*</span></label>
+                            <div class="radio-group">
+                                <input type="radio" name="quizCode" id="add-quiz-bizwizx" value="BIZWIZX"
+                                       <c:if test="${selectedQuiz == 'BIZWIZX'}">checked</c:if>>
+                                <label for="add-quiz-bizwizx">BizWizX</label>
+                                <input type="radio" name="quizCode" id="add-quiz-vortex" value="VORTEX"
+                                       <c:if test="${selectedQuiz == 'VORTEX'}">checked</c:if>>
+                                <label for="add-quiz-vortex">Vortex</label>
+                            </div>
+                        </div>
+
+                        <!-- College Name -->
+                        <div class="form-group">
+                            <label for="add-collegeName" class="form-label">College Name <span class="required">*</span></label>
+                            <input type="text" name="collegeName" id="add-collegeName" class="form-control"
+                                   placeholder="e.g. St. Xavier's College" required maxlength="150">
+                        </div>
+                    </div>
+
+                    <!-- Team Lead Email -->
+                    <div class="form-group">
+                        <label for="add-leadEmail" class="form-label">Team Lead Email <span class="required">*</span></label>
+                        <input type="email" name="leadEmail" id="add-leadEmail" class="form-control"
+                               placeholder="teamlead@college.edu" required maxlength="150">
+                        <p class="form-hint">Participant ID will be emailed to this address upon team creation</p>
+                    </div>
+
+                    <div class="card-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                        <!-- Student 1 -->
+                        <div class="form-group">
+                            <label for="add-student1Name" class="form-label">Student 1 <span class="required">*</span></label>
+                            <input type="text" name="student1Name" id="add-student1Name" class="form-control"
+                                   placeholder="Full name" required maxlength="100">
+                        </div>
+                        <!-- Student 2 -->
+                        <div class="form-group">
+                            <label for="add-student2Name" class="form-label">Student 2 <span class="text-muted text-sm">(optional)</span></label>
+                            <input type="text" name="student2Name" id="add-student2Name" class="form-control"
+                                   placeholder="Full name" maxlength="100">
+                        </div>
+                        <!-- Student 3 -->
+                        <div class="form-group">
+                            <label for="add-student3Name" class="form-label">Student 3 <span class="text-muted text-sm">(optional)</span></label>
+                            <input type="text" name="student3Name" id="add-student3Name" class="form-control"
+                                   placeholder="Full name" maxlength="100">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="btn-submit-add-team">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <line x1="19" y1="8" x2="19" y2="14"/>
+                            <line x1="22" y1="11" x2="16" y2="11"/>
+                        </svg>
+                        Create Team &amp; Send Email
+                    </button>
+                </form>
+            </div>
+        </div>
+
         <!-- ===== ROUND MANAGEMENT ===== -->
         <div class="glass-panel mb-3">
             <h3 class="section-title">
@@ -215,6 +294,7 @@
                             <th>#</th>
                             <th>Unique ID</th>
                             <th>College</th>
+                            <th>Lead Email</th>
                             <th>Student 1</th>
                             <th>Student 2</th>
                             <th>Student 3</th>
@@ -228,6 +308,7 @@
                                 <td>${status.index + 1}</td>
                                 <td><strong style="color: var(--purple-700);"><c:out value="${team.uniqueId}"/></strong></td>
                                 <td><c:out value="${team.collegeName}"/></td>
+                                <td style="font-size: 0.85rem;"><c:out value="${team.leadEmail}"/></td>
                                 <td><c:out value="${team.student1Name}"/></td>
                                 <td><c:out value="${team.student2Name}" default="—"/></td>
                                 <td><c:out value="${team.student3Name}" default="—"/></td>
@@ -237,16 +318,28 @@
                                     </strong>
                                 </td>
                                 <td>
-                                    <a href="${pageContext.request.contextPath}/admin/scorecard?id=${team.uniqueId}"
-                                       class="btn btn-outline btn-sm" title="View Scorecard">
-                                        Scorecard
-                                    </a>
+                                    <div class="d-flex gap-sm">
+                                        <a href="${pageContext.request.contextPath}/admin/scorecard?id=${team.uniqueId}"
+                                           class="btn btn-outline btn-sm" title="View Scorecard">
+                                            Scorecard
+                                        </a>
+                                        <form action="${pageContext.request.contextPath}/admin/resend-email" method="POST" style="display:inline;">
+                                            <input type="hidden" name="uniqueId" value="${team.uniqueId}">
+                                            <input type="hidden" name="quiz" value="${selectedQuiz}">
+                                            <button type="submit" class="btn btn-sm btn-outline" title="Resend ID Email"
+                                                    style="padding: 0.3rem 0.6rem; font-size: 0.75rem;"
+                                                    onclick="return confirm('Resend participant ID email to this team?')">
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                                                Resend
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         </c:forEach>
                         <c:if test="${empty teams}">
                             <tr>
-                                <td colspan="8" style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                                <td colspan="9" style="text-align: center; padding: 2rem; color: var(--gray-500);">
                                     No teams registered for <c:out value="${selectedQuiz}"/> yet.
                                 </td>
                             </tr>
@@ -275,6 +368,14 @@
     /* Confirm finish round */
     function confirmFinish(roundName) {
         return confirm('Are you sure you want to finish "' + roundName + '"? This will lock score editing for this round.');
+    }
+
+    /* Toggle Add Team form */
+    function toggleAddTeam() {
+        var section = document.getElementById('add-team-form-section');
+        if (section) {
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        }
     }
 
     /* Live search with debounce */
