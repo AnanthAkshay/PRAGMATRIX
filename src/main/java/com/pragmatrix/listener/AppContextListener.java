@@ -1,0 +1,60 @@
+package com.pragmatrix.listener;
+
+import com.pragmatrix.dao.AdminDAO;
+import com.pragmatrix.util.DBConnection;
+import com.pragmatrix.util.PasswordUtil;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
+import jakarta.servlet.annotation.WebListener;
+
+/**
+ * Application lifecycle listener.
+ * Initialises the HikariCP connection pool on startup and seeds
+ * default admin accounts if they don't exist.
+ * Closes the pool on shutdown.
+ */
+@WebListener
+public class AppContextListener implements ServletContextListener {
+
+    private static final String DEFAULT_PASSWORD = "Pragmatrix@2026";
+
+    @Override
+    public void contextInitialized(ServletContextEvent sce) {
+        System.out.println("[PRAGMATRIX] Initialising database connection pool...");
+        DBConnection.init();
+        System.out.println("[PRAGMATRIX] Connection pool ready.");
+
+        // Seed admin accounts if they don't exist
+        try {
+            seedAdmins();
+            System.out.println("[PRAGMATRIX] Admin accounts verified/seeded.");
+        } catch (Exception e) {
+            System.err.println("[PRAGMATRIX] Warning: Could not seed admin accounts: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void contextDestroyed(ServletContextEvent sce) {
+        System.out.println("[PRAGMATRIX] Shutting down connection pool...");
+        DBConnection.close();
+        System.out.println("[PRAGMATRIX] Connection pool closed.");
+    }
+
+    /**
+     * Seed 10 admin accounts with bcrypt-hashed default passwords.
+     */
+    private void seedAdmins() throws Exception {
+        AdminDAO dao = new AdminDAO();
+        String hash = PasswordUtil.hashPassword(DEFAULT_PASSWORD);
+
+        String[] names = {"One", "Two", "Three", "Four", "Five",
+                          "Six", "Seven", "Eight", "Nine", "Ten"};
+
+        for (int i = 1; i <= 10; i++) {
+            String username = "admin" + i;
+            String fullName = "Admin " + names[i - 1];
+            dao.insertIfNotExists(username, hash, fullName);
+        }
+    }
+}

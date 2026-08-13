@@ -1,0 +1,183 @@
+/* ============================================================
+   PRAGMATRIX 2026 — Print Stylesheet
+   Applied via @media print for scorecard printing.
+   Strips backgrounds, retains logo + gold accents as letterhead.
+   Targets A4/Letter single-page output.
+   ============================================================ */
+
+@media print {
+    /* Remove fixed background and dark panels */
+    body {
+        background-image: none !important;
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        font-size: 11pt;
+        line-height: 1.5;
+    }
+
+    /* Hide navigation, buttons, and non-print elements */
+    .site-header,
+    .site-footer,
+    .header-nav,
+    .btn,
+    .no-print,
+    .search-bar,
+    .quiz-tabs,
+    .round-actions .btn,
+    .alert {
+        display: none !important;
+    }
+
+    /* Remove glass effects */
+    .glass-panel,
+    .glass-panel-dark {
+        background: #FFFFFF !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border: 1px solid #D4AF37 !important;
+        box-shadow: none !important;
+        padding: 1rem !important;
+    }
+
+    /* Page setup */
+    @page {
+        size: A4;
+        margin: 1.5cm 2cm;
+    }
+
+    /* Scorecard-specific styles */
+    .scorecard {
+        max-width: 100% !important;
+        margin: 0 !important;
+        page-break-inside: avoid;
+    }
+
+    .scorecard-header {
+        text-align: center;
+        border-bottom: 3px solid #D4AF37 !important;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .scorecard-header .scorecard-logo {
+        height: 60px !important;
+        filter: none !important;
+    }
+
+    .scorecard-header h1 {
+        font-size: 18pt !important;
+        color: #2A0845 !important;
+    }
+
+    .scorecard-header .scorecard-event {
+        color: #B8962E !important;
+        font-size: 12pt !important;
+    }
+
+    /* Table print styles */
+    table.themed-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    table.themed-table thead {
+        background: #2A0845 !important;
+        color: #FFFFFF !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    table.themed-table th {
+        background: #2A0845 !important;
+        color: #FFFFFF !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        padding: 6pt 8pt !important;
+        font-size: 9pt !important;
+    }
+
+    table.themed-table td {
+        padding: 5pt 8pt !important;
+        border-bottom: 1px solid #D4AF37 !important;
+        font-size: 10pt !important;
+        color: #000000 !important;
+        background: none !important;
+    }
+
+    table.themed-table tbody tr:hover {
+        background: none !important;
+    }
+
+    /* Scorecard total */
+    .scorecard-total {
+        background: #2A0845 !important;
+        color: #FFFFFF !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        border-radius: 4px !important;
+        padding: 0.75rem !important;
+        margin-top: 1rem !important;
+    }
+
+    .scorecard-total .total-value {
+        color: #D4AF37 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        font-size: 24pt !important;
+    }
+
+    /* Team info */
+    .scorecard-team-info {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.5rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    .scorecard-team-info .info-label {
+        color: #4B1E78 !important;
+        font-size: 8pt !important;
+    }
+
+    .scorecard-team-info .info-value {
+        color: #000000 !important;
+        font-size: 10pt !important;
+    }
+
+    /* Gold divider for print */
+    .gold-divider {
+        height: 2px !important;
+        background: #D4AF37 !important;
+        margin: 0.75rem 0 !important;
+    }
+
+    /* Ensure links are visible */
+    a {
+        color: #000000 !important;
+        text-decoration: none !important;
+    }
+
+    /* No page breaks inside critical sections */
+    .scorecard-header,
+    .scorecard-team-info,
+    .scorecard-total,
+    table.themed-table {
+        page-break-inside: avoid;
+    }
+
+    /* Signature line at bottom */
+    .print-signature {
+        display: block !important;
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid #D4AF37;
+        text-align: right;
+        font-size: 9pt;
+        color: #666;
+    }
+}
+
+/* Hide signature line on screen */
+.print-signature {
+    display: none;
+}
