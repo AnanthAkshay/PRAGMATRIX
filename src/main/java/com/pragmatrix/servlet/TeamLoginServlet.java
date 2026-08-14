@@ -1,10 +1,7 @@
 package com.pragmatrix.servlet;
 
 import com.pragmatrix.dao.TeamDAO;
-import com.pragmatrix.dao.OtpDAO;
 import com.pragmatrix.model.Team;
-import com.pragmatrix.util.EmailService;
-import com.pragmatrix.util.OtpUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -13,22 +10,25 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.sql.Timestamp;
 
 /**
- * Handles the first step of team dashboard login: entering the Team Code.
+ * Handles Team Dashboard login: entering the Team Code directly.
  * GET  /team-login → display the team login form
- * POST /team-login → look up team, generate + email OTP, redirect to OTP verify
+ * POST /team-login → validate Team Code, create session, redirect directly to dashboard
  */
 @WebServlet(name = "TeamLoginServlet", urlPatterns = {"/team-login"})
 public class TeamLoginServlet extends HttpServlet {
 
     private final TeamDAO teamDAO = new TeamDAO();
-    private final OtpDAO otpDAO = new OtpDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        HttpSession session = req.getSession(false);
+        if (session != null && session.getAttribute("teamUniqueId") != null) {
+            resp.sendRedirect(req.getContextPath() + "/team/dashboard");
+            return;
+        }
         req.getRequestDispatcher("/team-login.jsp").forward(req, resp);
     }
 
@@ -48,50 +48,21 @@ public class TeamLoginServlet extends HttpServlet {
         }
 
         try {
-            // Look up team
+            // Look up team directly by unique ID / Team Code
             Team team = teamDAO.findByUniqueId(teamCode);
             if (team == null) {
-                req.setAttribute("error", "Team code not found \u2014 please check and try again.");
+                req.setAttribute("error", "Invalid Team Code. Please check and try again.");
                 req.setAttribute("teamCode", teamCode);
                 req.getRequestDispatcher("/team-login.jsp").forward(req, resp);
                 return;
             }
 
-            // Rate-limit: max 5 OTP requests per team per 15 minutes
-            int recentCount = otpDAO.countRecentOtps(teamCode, 15);
-            if (recentCount >= 5) {
-                req.setAttribute("error", "Too many OTP requests. Please wait a few minutes before trying again.");
-                req.setAttribute("teamCode", teamCode);
-                req.getRequestDispatcher("/team-login.jsp").forward(req, resp);
-                return;
-            }
-
-            // Invalidate any existing unused OTPs for this team
-            otpDAO.invalidateAllForTeam(teamCode);
-
-            // Generate OTP (6-digit, cryptographically secure)
-            String otpCode = OtpUtil.generateOtp();
-
-            // Set expiry: 5 minutes from now
-            Timestamp expiresAt = new Timestamp(System.currentTimeMillis() + (5 * 60 * 1000));
-
-            // Store OTP in database
-            otpDAO.insertOtp(teamCode, otpCode, expiresAt);
-
-            // Email OTP to team lead
-            boolean emailSent = EmailService.sendOtpEmail(team.getLeadEmail(), otpCode);
-
-            // Store pending team info in session for the OTP verify step
+            // Create team session and redirect directly to team dashboard
             HttpSession session = req.getSession(true);
-            session.setAttribute("pendingTeamId", teamCode);
-            session.setAttribute("pendingTeamEmail", team.getLeadEmail());
-            session.setAttribute("otpLastSentAt", System.currentTimeMillis());
+            session.setAttribute("teamUniqueId", team.getUniqueId());
+            session.setMaxInactiveInterval(60 * 60); // 60 minutes session
 
-            if (!emailSent) {
-                System.err.println("[PRAGMATRIX] OTP email failed for team " + teamCode + " — OTP is still stored in DB.");
-            }
-
-            resp.sendRedirect(req.getContextPath() + "/team-otp-verify");
+            resp.sendRedirect(req.getContextPath() + "/team/dashboard");
 
         } catch (Exception e) {
             e.printStackTrace();

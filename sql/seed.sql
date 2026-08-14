@@ -39,6 +39,6 @@ ON DUPLICATE KEY UPDATE round_name = VALUES(round_name);
 -- These hashes are pre-computed; the app uses jBCrypt to verify.
 -- ------------------------------------------------------------
 INSERT INTO admins (username, password_hash, full_name, email) VALUES
-    ('svs262003@gmail.com',          '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin Primary', 'svs262003@gmail.com'),
-    ('shirishvshandilya@gmail.com',  '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin Backup',  'shirishvshandilya@gmail.com')
+    ('svs262003@gmail.com',          '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin 1', 'svs262003@gmail.com'),
+    ('shirishvshandilya@gmail.com',  '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin 2 - Backup',  'shirishvshandilya@gmail.com')
 ON DUPLICATE KEY UPDATE full_name = VALUES(full_name);

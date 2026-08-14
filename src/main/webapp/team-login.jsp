@@ -48,19 +48,20 @@
                 <div class="form-group">
                     <label for="teamCode" class="form-label">Team Code <span class="required">*</span></label>
                     <input type="text" name="teamCode" id="teamCode" class="form-control"
-                           placeholder="e.g. PMBZ047"
+                           placeholder="e.g. PMBZ001"
                            value="<c:out value='${teamCode}'/>"
                            required maxlength="15"
                            style="text-transform: uppercase; font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 2px; text-align: center;">
-                    <p class="form-hint">Enter the unique Participant ID you received via email</p>
+                    <p class="form-hint">Enter the Team Code you received in your registration confirmation email</p>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-lg w-100" id="btn-send-otp">
+                <button type="submit" class="btn btn-primary btn-lg w-100" id="btn-team-login">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                        <polyline points="22,6 12,13 2,6"/>
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                        <polyline points="10 17 15 12 10 7"/>
+                        <line x1="15" y1="12" x2="3" y2="12"/>
                     </svg>
-                    Send OTP
+                    Access Dashboard
                 </button>
             </form>
 

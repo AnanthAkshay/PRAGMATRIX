@@ -10,15 +10,15 @@ CREATE DATABASE IF NOT EXISTS pragmatrix2026
 USE pragmatrix2026;
 
 -- ------------------------------------------------------------
--- Admin accounts
+-- Admin accounts (max 10 accounts enforced at application layer)
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS admins (
-    admin_id    INT AUTO_INCREMENT PRIMARY KEY,
-    username    VARCHAR(150) UNIQUE NOT NULL,
+    admin_id      INT AUTO_INCREMENT PRIMARY KEY,
+    username      VARCHAR(150) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    full_name   VARCHAR(100),
-    email       VARCHAR(150) UNIQUE,
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    full_name     VARCHAR(100) NOT NULL,
+    email         VARCHAR(150) UNIQUE NOT NULL,
+    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- ------------------------------------------------------------

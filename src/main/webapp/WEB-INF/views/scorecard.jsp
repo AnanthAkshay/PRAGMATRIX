@@ -22,6 +22,7 @@
             <div class="header-links">
                 <a href="${pageContext.request.contextPath}/admin/dashboard?quiz=${team.quizCode}">Dashboard</a>
                 <a href="${pageContext.request.contextPath}/admin/leaderboard?quiz=${team.quizCode}">Leaderboard</a>
+                <a href="${pageContext.request.contextPath}/admin/admins">Admins</a>
             </div>
             <div class="admin-info">
                 <span class="admin-name">

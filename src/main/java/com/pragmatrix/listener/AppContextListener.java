@@ -27,7 +27,7 @@ public class AppContextListener implements ServletContextListener {
         // Seed admin accounts if they don't exist
         try {
             seedAdmins();
-            System.out.println("[PRAGMATRIX] Admin accounts verified/seeded.");
+            System.out.println("[PRAGMATRIX] Admin accounts verified/seeded (Default initial password: " + DEFAULT_PASSWORD + ").");
         } catch (Exception e) {
             System.err.println("[PRAGMATRIX] Warning: Could not seed admin accounts: " + e.getMessage());
             e.printStackTrace();
@@ -43,14 +43,14 @@ public class AppContextListener implements ServletContextListener {
 
     /**
      * Seed 2 admin accounts with bcrypt-hashed default passwords.
-     * Primary: svs262003@gmail.com
-     * Backup:  shirishvshandilya@gmail.com
+     * Primary: svs262003@gmail.com ("Admin 1")
+     * Backup:  shirishvshandilya@gmail.com ("Admin 2 - Backup")
      */
     private void seedAdmins() throws Exception {
         AdminDAO dao = new AdminDAO();
         String hash = PasswordUtil.hashPassword(DEFAULT_PASSWORD);
 
-        dao.insertIfNotExists("svs262003@gmail.com", hash, "Admin Primary", "svs262003@gmail.com");
-        dao.insertIfNotExists("shirishvshandilya@gmail.com", hash, "Admin Backup", "shirishvshandilya@gmail.com");
+        dao.insertIfNotExists("svs262003@gmail.com", hash, "Admin 1", "svs262003@gmail.com");
+        dao.insertIfNotExists("shirishvshandilya@gmail.com", hash, "Admin 2 - Backup", "shirishvshandilya@gmail.com");
     }
 }

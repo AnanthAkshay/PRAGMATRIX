@@ -43,15 +43,15 @@ public class ResendIdEmailServlet extends HttpServlet {
         }
 
         try {
-            String email = teamDAO.findLeadEmailByUniqueId(uniqueId.trim());
-            if (email == null) {
+            com.pragmatrix.model.Team team = teamDAO.findByUniqueId(uniqueId.trim());
+            if (team == null || team.getLeadEmail() == null) {
                 resp.sendRedirect(redirectUrl + "&error=" + URLEncoder.encode("Team not found: " + uniqueId, StandardCharsets.UTF_8));
                 return;
             }
 
-            boolean sent = EmailService.sendParticipantIdEmail(email, uniqueId.trim());
+            boolean sent = EmailService.sendRegistrationConfirmationEmail(team.getLeadEmail(), team.getTeamLeadName(), team.getCollegeName(), team.getQuizCode(), uniqueId.trim());
             if (sent) {
-                resp.sendRedirect(redirectUrl + "&success=" + URLEncoder.encode("ID email resent to " + uniqueId + " ✔", StandardCharsets.UTF_8));
+                resp.sendRedirect(redirectUrl + "&success=" + URLEncoder.encode("Confirmation email resent to " + uniqueId + " ✔", StandardCharsets.UTF_8));
             } else {
                 resp.sendRedirect(redirectUrl + "&error=" + URLEncoder.encode("Email sending failed for " + uniqueId + ". Check server logs.", StandardCharsets.UTF_8));
             }

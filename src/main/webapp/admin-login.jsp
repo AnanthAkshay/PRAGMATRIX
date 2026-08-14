@@ -20,7 +20,7 @@
             </a>
             <div class="header-links">
                 <a href="${pageContext.request.contextPath}/">Home</a>
-                <a href="${pageContext.request.contextPath}/register">Register</a>
+                <a href="${pageContext.request.contextPath}/register">Register Team</a>
             </div>
         </nav>
     </header>
@@ -31,7 +31,7 @@
             <div class="form-card-header">
                 <img src="${pageContext.request.contextPath}/images/archway-bg.jpeg" alt="PRAGMATRIX 2026" class="form-logo">
                 <h2>Admin Portal</h2>
-                <p>Sign in to manage quizzes and scores</p>
+                <p>Sign in to manage quizzes, rounds, and scores</p>
             </div>
 
             <!-- Error alert -->
@@ -42,59 +42,31 @@
                 </div>
             </c:if>
 
-            <div id="password-login-section">
-                <form action="${pageContext.request.contextPath}/login" method="POST" id="login-form" novalidate>
-                    <input type="hidden" name="loginType" value="password">
-                    <div class="form-group">
-                        <label for="email_pass" class="form-label">Email</label>
-                        <input type="email" name="email" id="email_pass" class="form-control"
-                               placeholder="Enter your admin email"
-                               value="<c:out value='${email}'/>"
-                               required autocomplete="email">
-                    </div>
+            <form action="${pageContext.request.contextPath}/login" method="POST" id="login-form" novalidate>
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address <span class="required">*</span></label>
+                    <input type="email" name="email" id="email" class="form-control"
+                           placeholder="admin@pragmatrix.com"
+                           value="<c:out value='${email}'/>"
+                           required autocomplete="email">
+                </div>
 
-                    <div class="form-group">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" name="password" id="password" class="form-control"
-                               placeholder="Enter your password"
-                               required autocomplete="current-password">
-                    </div>
+                <div class="form-group">
+                    <label for="password" class="form-label">Password <span class="required">*</span></label>
+                    <input type="password" name="password" id="password" class="form-control"
+                           placeholder="Enter your password"
+                           required autocomplete="current-password">
+                </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100" id="btn-login">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-                            <polyline points="10 17 15 12 10 7"/>
-                            <line x1="15" y1="12" x2="3" y2="12"/>
-                        </svg>
-                        Sign In
-                    </button>
-                    
-                    <div style="text-align: center; margin-top: 15px;">
-                        <a href="#" onclick="toggleLoginMethod('otp')">Login with OTP instead</a>
-                    </div>
-                </form>
-            </div>
-            
-            <div id="otp-login-section" style="display: none;">
-                <form action="${pageContext.request.contextPath}/login" method="POST" id="otp-request-form" novalidate>
-                    <input type="hidden" name="loginType" value="otp_request">
-                    <div class="form-group">
-                        <label for="email" class="form-label">Email Address</label>
-                        <input type="email" name="email" id="email" class="form-control"
-                               placeholder="Enter your registered email"
-                               value="<c:out value='${email}'/>"
-                               required>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary btn-lg w-100" id="btn-otp-request">
-                        Request OTP
-                    </button>
-                    
-                    <div style="text-align: center; margin-top: 15px;">
-                        <a href="#" onclick="toggleLoginMethod('password')">Login with Password instead</a>
-                    </div>
-                </form>
-            </div>
+                <button type="submit" class="btn btn-primary btn-lg w-100" id="btn-login">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                        <polyline points="10 17 15 12 10 7"/>
+                        <line x1="15" y1="12" x2="3" y2="12"/>
+                    </svg>
+                    Sign In
+                </button>
+            </form>
 
             <div class="form-footer">
                 <a href="${pageContext.request.contextPath}/">&larr; Back to Home</a>
@@ -103,43 +75,21 @@
     </div>
 
     <script>
-    function toggleLoginMethod(method) {
-        if (method === 'otp') {
-            document.getElementById('password-login-section').style.display = 'none';
-            document.getElementById('otp-login-section').style.display = 'block';
-        } else {
-            document.getElementById('password-login-section').style.display = 'block';
-            document.getElementById('otp-login-section').style.display = 'none';
-        }
-    }
-    
     document.getElementById('login-form').addEventListener('submit', function(e) {
-        var email = document.getElementById('email_pass').value.trim();
+        var email = document.getElementById('email').value.trim();
         var password = document.getElementById('password').value;
         if (!email || !password) {
             e.preventDefault();
-            showError('Email and password are required.');
+            var alertDiv = document.getElementById('login-error');
+            if (!alertDiv) {
+                alertDiv = document.createElement('div');
+                alertDiv.id = 'login-error';
+                alertDiv.className = 'alert alert-error';
+                document.querySelector('.form-card-header').insertAdjacentElement('afterend', alertDiv);
+            }
+            alertDiv.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Email and password are required.';
         }
     });
-    
-    document.getElementById('otp-request-form').addEventListener('submit', function(e) {
-        var email = document.getElementById('email').value.trim();
-        if (!email) {
-            e.preventDefault();
-            showError('Email is required.');
-        }
-    });
-    
-    function showError(msg) {
-        var alertDiv = document.getElementById('login-error');
-        if (!alertDiv) {
-            alertDiv = document.createElement('div');
-            alertDiv.id = 'login-error';
-            alertDiv.className = 'alert alert-error';
-            document.querySelector('.form-card-header').insertAdjacentElement('afterend', alertDiv);
-        }
-        alertDiv.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ' + msg;
-    }
     </script>
 
 </body>

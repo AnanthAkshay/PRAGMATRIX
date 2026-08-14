@@ -93,8 +93,8 @@ public class RegisterServlet extends HttpServlet {
 
             String uniqueId = teamDAO.insert(team, quiz.getIdPrefix());
 
-            // Attempt to send the participant ID email
-            boolean emailSent = EmailService.sendParticipantIdEmail(leadEmail, uniqueId);
+            // Attempt to send the registration confirmation email
+            boolean emailSent = EmailService.sendRegistrationConfirmationEmail(leadEmail, teamLeadName, collegeName, quiz.getQuizName(), uniqueId);
 
             String successMsg = "Team " + uniqueId + " created successfully!";
             if (emailSent) {
