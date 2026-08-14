@@ -17,7 +17,7 @@ public class AdminDAO {
      * @return Admin object or null if not found
      */
     public Admin findByUsername(String username) throws SQLException {
-        String sql = "SELECT admin_id, username, password_hash, full_name, created_at FROM admins WHERE username = ?";
+        String sql = "SELECT admin_id, username, password_hash, full_name, email, created_at FROM admins WHERE username = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, username);
@@ -34,7 +34,7 @@ public class AdminDAO {
      * Find an admin by ID.
      */
     public Admin findById(int adminId) throws SQLException {
-        String sql = "SELECT admin_id, username, password_hash, full_name, created_at FROM admins WHERE admin_id = ?";
+        String sql = "SELECT admin_id, username, password_hash, full_name, email, created_at FROM admins WHERE admin_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, adminId);
@@ -80,6 +80,7 @@ public class AdminDAO {
         a.setUsername(rs.getString("username"));
         a.setPasswordHash(rs.getString("password_hash"));
         a.setFullName(rs.getString("full_name"));
+        a.setEmail(rs.getString("email"));
         a.setCreatedAt(rs.getTimestamp("created_at"));
         return a;
     }

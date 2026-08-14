@@ -11,6 +11,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import com.pragmatrix.util.EmailService;
+import com.pragmatrix.util.OtpUtil;
 
 /**
  * Handles admin login.
@@ -38,6 +40,47 @@ public class AdminLoginServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
+
+        String loginType = req.getParameter("loginType");
+        
+        if ("otp_request".equals(loginType)) {
+            String username = req.getParameter("username");
+            String email = req.getParameter("email");
+            
+            if (username == null || username.trim().isEmpty() ||
+                email == null || email.trim().isEmpty()) {
+                req.setAttribute("error", "Username and email are required for OTP login.");
+                req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
+                return;
+            }
+            
+            try {
+                Admin admin = adminDAO.findByUsername(username.trim());
+                if (admin == null || !email.trim().equalsIgnoreCase(admin.getEmail())) {
+                    req.setAttribute("error", "Invalid username or email does not match our records.");
+                    req.setAttribute("username", username);
+                    req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
+                    return;
+                }
+                
+                String otpCode = OtpUtil.generateOtp();
+                boolean emailSent = EmailService.sendOtpEmail(admin.getEmail(), otpCode);
+                
+                HttpSession session = req.getSession(true);
+                session.setAttribute("pendingAdminUsername", admin.getUsername());
+                session.setAttribute("adminLoginOtp", otpCode);
+                session.setAttribute("adminOtpLastSentAt", System.currentTimeMillis());
+                
+                resp.sendRedirect(req.getContextPath() + "/admin-otp-verify");
+                return;
+                
+            } catch (Exception e) {
+                e.printStackTrace();
+                req.setAttribute("error", "An error occurred generating OTP.");
+                req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
+                return;
+            }
+        }
 
         String username = req.getParameter("username");
         String password = req.getParameter("password");
