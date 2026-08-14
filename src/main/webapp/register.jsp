@@ -67,31 +67,23 @@
                            required maxlength="150">
                 </div>
 
-                <!-- Student 1 (required) -->
+                <!-- Team Lead Name -->
                 <div class="form-group">
-                    <label for="student1Name" class="form-label">Student 1 Name <span class="required">*</span></label>
-                    <input type="text" name="student1Name" id="student1Name" class="form-control"
-                           placeholder="Full name of team member 1"
-                           value="<c:out value='${student1Name}'/>"
+                    <label for="teamLeadName" class="form-label">Team Lead Name <span class="required">*</span></label>
+                    <input type="text" name="teamLeadName" id="teamLeadName" class="form-control"
+                           placeholder="Full name of the team lead"
+                           value="<c:out value='${teamLeadName}'/>"
                            required maxlength="100">
                 </div>
 
-                <!-- Student 2 (optional) -->
+                <!-- Team Lead Email -->
                 <div class="form-group">
-                    <label for="student2Name" class="form-label">Student 2 Name <span class="text-muted text-sm">(optional)</span></label>
-                    <input type="text" name="student2Name" id="student2Name" class="form-control"
-                           placeholder="Full name of team member 2"
-                           value="<c:out value='${student2Name}'/>"
-                           maxlength="100">
-                </div>
-
-                <!-- Student 3 (optional) -->
-                <div class="form-group">
-                    <label for="student3Name" class="form-label">Student 3 Name <span class="text-muted text-sm">(optional)</span></label>
-                    <input type="text" name="student3Name" id="student3Name" class="form-control"
-                           placeholder="Full name of team member 3"
-                           value="<c:out value='${student3Name}'/>"
-                           maxlength="100">
+                    <label for="leadEmail" class="form-label">Team Lead Email <span class="required">*</span></label>
+                    <input type="email" name="leadEmail" id="leadEmail" class="form-control"
+                           placeholder="teamlead@college.edu"
+                           value="<c:out value='${leadEmail}'/>"
+                           required maxlength="150">
+                    <p class="form-hint">Participant ID will be emailed to this address</p>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-lg w-100" id="btn-submit-register">
@@ -115,13 +107,15 @@
     <script>
     document.getElementById('register-form').addEventListener('submit', function(e) {
         var college = document.getElementById('collegeName').value.trim();
-        var student1 = document.getElementById('student1Name').value.trim();
+        var leadName = document.getElementById('teamLeadName').value.trim();
+        var leadEmail = document.getElementById('leadEmail').value.trim();
         var quizSelected = document.querySelector('input[name="quizCode"]:checked');
         var errors = [];
 
         if (!quizSelected) errors.push('Please select an event.');
         if (!college) errors.push('College name is required.');
-        if (!student1) errors.push('At least one student name is required.');
+        if (!leadName) errors.push('Team lead name is required.');
+        if (!leadEmail) errors.push('Team lead email is required.');
 
         if (errors.length > 0) {
             e.preventDefault();

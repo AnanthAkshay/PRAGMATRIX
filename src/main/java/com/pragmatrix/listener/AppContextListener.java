@@ -42,19 +42,15 @@ public class AppContextListener implements ServletContextListener {
     }
 
     /**
-     * Seed 10 admin accounts with bcrypt-hashed default passwords.
+     * Seed 2 admin accounts with bcrypt-hashed default passwords.
+     * Primary: svs262003@gmail.com
+     * Backup:  shirishvshandilya@gmail.com
      */
     private void seedAdmins() throws Exception {
         AdminDAO dao = new AdminDAO();
         String hash = PasswordUtil.hashPassword(DEFAULT_PASSWORD);
 
-        String[] names = {"One", "Two", "Three", "Four", "Five",
-                          "Six", "Seven", "Eight", "Nine", "Ten"};
-
-        for (int i = 1; i <= 10; i++) {
-            String username = "admin" + i;
-            String fullName = "Admin " + names[i - 1];
-            dao.insertIfNotExists(username, hash, fullName);
-        }
+        dao.insertIfNotExists("svs262003@gmail.com", hash, "Admin Primary", "svs262003@gmail.com");
+        dao.insertIfNotExists("shirishvshandilya@gmail.com", hash, "Admin Backup", "shirishvshandilya@gmail.com");
     }
 }

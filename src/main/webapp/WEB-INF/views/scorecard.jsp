@@ -80,19 +80,13 @@
                     <div class="info-value"><c:out value="${team.collegeName}"/></div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label">Student 1</div>
-                    <div class="info-value"><c:out value="${team.student1Name}"/></div>
+                    <div class="info-label">Team Lead</div>
+                    <div class="info-value"><c:out value="${team.teamLeadName}"/></div>
                 </div>
                 <div class="info-item">
-                    <div class="info-label">Student 2</div>
-                    <div class="info-value"><c:out value="${team.student2Name}" default="—"/></div>
+                    <div class="info-label">Lead Email</div>
+                    <div class="info-value"><c:out value="${team.leadEmail}"/></div>
                 </div>
-                <c:if test="${not empty team.student3Name}">
-                    <div class="info-item">
-                        <div class="info-label">Student 3</div>
-                        <div class="info-value"><c:out value="${team.student3Name}"/></div>
-                    </div>
-                </c:if>
             </div>
 
             <div class="gold-divider"></div>

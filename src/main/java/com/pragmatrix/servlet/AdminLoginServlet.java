@@ -24,6 +24,12 @@ public class AdminLoginServlet extends HttpServlet {
 
     private final AdminDAO adminDAO = new AdminDAO();
 
+    private boolean isAuthorizedAdminEmail(String email) {
+        if (email == null) return false;
+        String e = email.trim().toLowerCase();
+        return "svs262003@gmail.com".equals(e) || "shirishvshandilya@gmail.com".equals(e);
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -44,21 +50,26 @@ public class AdminLoginServlet extends HttpServlet {
         String loginType = req.getParameter("loginType");
         
         if ("otp_request".equals(loginType)) {
-            String username = req.getParameter("username");
             String email = req.getParameter("email");
             
-            if (username == null || username.trim().isEmpty() ||
-                email == null || email.trim().isEmpty()) {
-                req.setAttribute("error", "Username and email are required for OTP login.");
+            if (email == null || email.trim().isEmpty()) {
+                req.setAttribute("error", "Email is required for OTP login.");
+                req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
+                return;
+            }
+            
+            if (!isAuthorizedAdminEmail(email)) {
+                req.setAttribute("error", "Access denied. Unauthorized admin email address.");
+                req.setAttribute("email", email);
                 req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
                 return;
             }
             
             try {
-                Admin admin = adminDAO.findByUsername(username.trim());
-                if (admin == null || !email.trim().equalsIgnoreCase(admin.getEmail())) {
-                    req.setAttribute("error", "Invalid username or email does not match our records.");
-                    req.setAttribute("username", username);
+                Admin admin = adminDAO.findByEmail(email.trim());
+                if (admin == null) {
+                    req.setAttribute("error", "Email does not match our records.");
+                    req.setAttribute("email", email);
                     req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
                     return;
                 }
@@ -82,22 +93,29 @@ public class AdminLoginServlet extends HttpServlet {
             }
         }
 
-        String username = req.getParameter("username");
+        String email = req.getParameter("email");
         String password = req.getParameter("password");
 
-        if (username == null || username.trim().isEmpty() ||
+        if (email == null || email.trim().isEmpty() ||
             password == null || password.trim().isEmpty()) {
-            req.setAttribute("error", "Username and password are required.");
+            req.setAttribute("error", "Email and password are required.");
+            req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
+            return;
+        }
+
+        if (!isAuthorizedAdminEmail(email)) {
+            req.setAttribute("error", "Access denied. Unauthorized admin email address.");
+            req.setAttribute("email", email);
             req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
             return;
         }
 
         try {
-            Admin admin = adminDAO.findByUsername(username.trim());
+            Admin admin = adminDAO.findByEmail(email.trim());
 
             if (admin == null || !PasswordUtil.checkPassword(password, admin.getPasswordHash())) {
-                req.setAttribute("error", "Invalid username or password.");
-                req.setAttribute("username", username);
+                req.setAttribute("error", "Invalid email or password.");
+                req.setAttribute("email", email);
                 req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
                 return;
             }

@@ -46,11 +46,11 @@
                 <form action="${pageContext.request.contextPath}/login" method="POST" id="login-form" novalidate>
                     <input type="hidden" name="loginType" value="password">
                     <div class="form-group">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" name="username" id="username" class="form-control"
-                               placeholder="Enter your admin username"
-                               value="<c:out value='${username}'/>"
-                               required autocomplete="username">
+                        <label for="email_pass" class="form-label">Email</label>
+                        <input type="email" name="email" id="email_pass" class="form-control"
+                               placeholder="Enter your admin email"
+                               value="<c:out value='${email}'/>"
+                               required autocomplete="email">
                     </div>
 
                     <div class="form-group">
@@ -79,17 +79,10 @@
                 <form action="${pageContext.request.contextPath}/login" method="POST" id="otp-request-form" novalidate>
                     <input type="hidden" name="loginType" value="otp_request">
                     <div class="form-group">
-                        <label for="otp_username" class="form-label">Username</label>
-                        <input type="text" name="username" id="otp_username" class="form-control"
-                               placeholder="Enter your admin username"
-                               value="<c:out value='${username}'/>"
-                               required>
-                    </div>
-
-                    <div class="form-group">
                         <label for="email" class="form-label">Email Address</label>
                         <input type="email" name="email" id="email" class="form-control"
                                placeholder="Enter your registered email"
+                               value="<c:out value='${email}'/>"
                                required>
                     </div>
 
@@ -121,20 +114,19 @@
     }
     
     document.getElementById('login-form').addEventListener('submit', function(e) {
-        var username = document.getElementById('username').value.trim();
+        var email = document.getElementById('email_pass').value.trim();
         var password = document.getElementById('password').value;
-        if (!username || !password) {
+        if (!email || !password) {
             e.preventDefault();
-            showError('Username and password are required.');
+            showError('Email and password are required.');
         }
     });
     
     document.getElementById('otp-request-form').addEventListener('submit', function(e) {
-        var username = document.getElementById('otp_username').value.trim();
         var email = document.getElementById('email').value.trim();
-        if (!username || !email) {
+        if (!email) {
             e.preventDefault();
-            showError('Username and email are required.');
+            showError('Email is required.');
         }
     });
     

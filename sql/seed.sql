@@ -33,20 +33,12 @@ INSERT INTO rounds (quiz_code, round_number, round_name, judging_criteria) VALUE
 ON DUPLICATE KEY UPDATE round_name = VALUES(round_name);
 
 -- ------------------------------------------------------------
--- Seed 10 admin accounts
+-- Seed 2 admin accounts
 -- Password for all: Pragmatrix@2026
 -- BCrypt hash of "Pragmatrix@2026" (cost factor 12)
 -- These hashes are pre-computed; the app uses jBCrypt to verify.
 -- ------------------------------------------------------------
-INSERT INTO admins (username, password_hash, full_name) VALUES
-    ('admin1',  '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin One'),
-    ('admin2',  '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin Two'),
-    ('admin3',  '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin Three'),
-    ('admin4',  '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin Four'),
-    ('admin5',  '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin Five'),
-    ('admin6',  '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin Six'),
-    ('admin7',  '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin Seven'),
-    ('admin8',  '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin Eight'),
-    ('admin9',  '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin Nine'),
-    ('admin10', '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin Ten')
+INSERT INTO admins (username, password_hash, full_name, email) VALUES
+    ('svs262003@gmail.com',          '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin Primary', 'svs262003@gmail.com'),
+    ('shirishvshandilya@gmail.com',  '$2a$12$LJ3m4ys3LzxKqVpnI9RE4OaGi3q3qHCvqz1H8uG6KVnYpOqz1Lvr2', 'Admin Backup',  'shirishvshandilya@gmail.com')
 ON DUPLICATE KEY UPDATE full_name = VALUES(full_name);

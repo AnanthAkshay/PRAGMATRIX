@@ -20,7 +20,24 @@ public class AdminDAO {
         String sql = "SELECT admin_id, username, password_hash, full_name, email, created_at FROM admins WHERE username = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, username);
+             ps.setString(1, username);
+             try (ResultSet rs = ps.executeQuery()) {
+                 if (rs.next()) {
+                     return mapRow(rs);
+                 }
+             }
+        }
+        return null;
+    }
+
+    /**
+     * Find an admin by email.
+     */
+    public Admin findByEmail(String email) throws SQLException {
+        String sql = "SELECT admin_id, username, password_hash, full_name, email, created_at FROM admins WHERE email = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return mapRow(rs);
@@ -63,13 +80,14 @@ public class AdminDAO {
     /**
      * Insert a new admin (used by seed scripts / startup).
      */
-    public void insertIfNotExists(String username, String passwordHash, String fullName) throws SQLException {
-        String sql = "INSERT IGNORE INTO admins (username, password_hash, full_name) VALUES (?, ?, ?)";
+    public void insertIfNotExists(String username, String passwordHash, String fullName, String email) throws SQLException {
+        String sql = "INSERT IGNORE INTO admins (username, password_hash, full_name, email) VALUES (?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, username);
             ps.setString(2, passwordHash);
             ps.setString(3, fullName);
+            ps.setString(4, email);
             ps.executeUpdate();
         }
     }

@@ -122,21 +122,9 @@
                     <div class="info-value"><c:out value="${team.collegeName}"/></div>
                 </div>
                 <div class="team-info-item">
-                    <div class="info-label">Student 1</div>
-                    <div class="info-value"><c:out value="${team.student1Name}"/></div>
+                    <div class="info-label">Team Lead</div>
+                    <div class="info-value"><c:out value="${team.teamLeadName}"/></div>
                 </div>
-                <c:if test="${not empty team.student2Name}">
-                    <div class="team-info-item">
-                        <div class="info-label">Student 2</div>
-                        <div class="info-value"><c:out value="${team.student2Name}"/></div>
-                    </div>
-                </c:if>
-                <c:if test="${not empty team.student3Name}">
-                    <div class="team-info-item">
-                        <div class="info-label">Student 3</div>
-                        <div class="info-value"><c:out value="${team.student3Name}"/></div>
-                    </div>
-                </c:if>
             </div>
         </div>
 

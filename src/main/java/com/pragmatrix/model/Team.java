@@ -9,10 +9,8 @@ public class Team {
     private String uniqueId;
     private String quizCode;
     private String collegeName;
+    private String teamLeadName;
     private String leadEmail;
-    private String student1Name;
-    private String student2Name;
-    private String student3Name;
     private Timestamp registeredAt;
 
     /** Transient field: total points (populated by leaderboard queries). */
@@ -20,14 +18,11 @@ public class Team {
 
     public Team() {}
 
-    public Team(String quizCode, String collegeName, String leadEmail,
-                String student1Name, String student2Name, String student3Name) {
+    public Team(String quizCode, String collegeName, String teamLeadName, String leadEmail) {
         this.quizCode = quizCode;
         this.collegeName = collegeName;
+        this.teamLeadName = teamLeadName;
         this.leadEmail = leadEmail;
-        this.student1Name = student1Name;
-        this.student2Name = student2Name;
-        this.student3Name = student3Name;
     }
 
     public String getUniqueId() { return uniqueId; }
@@ -39,17 +34,11 @@ public class Team {
     public String getCollegeName() { return collegeName; }
     public void setCollegeName(String collegeName) { this.collegeName = collegeName; }
 
+    public String getTeamLeadName() { return teamLeadName; }
+    public void setTeamLeadName(String teamLeadName) { this.teamLeadName = teamLeadName; }
+
     public String getLeadEmail() { return leadEmail; }
     public void setLeadEmail(String leadEmail) { this.leadEmail = leadEmail; }
-
-    public String getStudent1Name() { return student1Name; }
-    public void setStudent1Name(String student1Name) { this.student1Name = student1Name; }
-
-    public String getStudent2Name() { return student2Name; }
-    public void setStudent2Name(String student2Name) { this.student2Name = student2Name; }
-
-    public String getStudent3Name() { return student3Name; }
-    public void setStudent3Name(String student3Name) { this.student3Name = student3Name; }
 
     public Timestamp getRegisteredAt() { return registeredAt; }
     public void setRegisteredAt(Timestamp registeredAt) { this.registeredAt = registeredAt; }

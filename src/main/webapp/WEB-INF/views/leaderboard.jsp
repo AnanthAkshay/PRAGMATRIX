@@ -69,7 +69,7 @@
                             <th>Rank</th>
                             <th>Team ID</th>
                             <th>College</th>
-                            <th>Members</th>
+                            <th>Team Lead</th>
                             <c:forEach var="round" items="${rounds}">
                                 <th>
                                     <c:out value="${round.roundName}"/>
@@ -96,9 +96,7 @@
                                 <td><strong style="color: var(--purple-700);"><c:out value="${entry.uniqueId}"/></strong></td>
                                 <td><c:out value="${entry.collegeName}"/></td>
                                 <td>
-                                    <c:out value="${entry.student1Name}"/>
-                                    <c:if test="${not empty entry.student2Name}">, <c:out value="${entry.student2Name}"/></c:if>
-                                    <c:if test="${not empty entry.student3Name}">, <c:out value="${entry.student3Name}"/></c:if>
+                                    <c:out value="${entry.teamLeadName}"/>
                                 </td>
                                 <c:forEach var="round" items="${rounds}">
                                     <td style="text-align: center;">
@@ -166,15 +164,13 @@
                         else if (rank === 3) rankBadge = '<span class="rank-badge bronze">3</span>';
                         else rankBadge = '<span class="rank-badge default">' + rank + '</span>';
 
-                        var members = entry.student1Name || '';
-                        if (entry.student2Name) members += ', ' + entry.student2Name;
-                        if (entry.student3Name) members += ', ' + entry.student3Name;
+                        var leadName = entry.teamLeadName || '';
 
                         html += '<tr class="' + rankClass + '">';
                         html += '<td>' + rankBadge + '</td>';
                         html += '<td><strong style="color:var(--purple-700);">' + (entry.uniqueId || '') + '</strong></td>';
                         html += '<td>' + (entry.collegeName || '') + '</td>';
-                        html += '<td>' + members + '</td>';
+                        html += '<td>' + leadName + '</td>';
 
                         if (data.rounds) {
                             data.rounds.forEach(function(round) {

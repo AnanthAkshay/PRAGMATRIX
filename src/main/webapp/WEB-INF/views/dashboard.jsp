@@ -129,24 +129,11 @@
                         <p class="form-hint">Participant ID will be emailed to this address upon team creation</p>
                     </div>
 
-                    <div class="card-grid" style="grid-template-columns: 1fr 1fr 1fr;">
-                        <!-- Student 1 -->
+                    <!-- Team Lead Name -->
                         <div class="form-group">
-                            <label for="add-student1Name" class="form-label">Student 1 <span class="required">*</span></label>
-                            <input type="text" name="student1Name" id="add-student1Name" class="form-control"
-                                   placeholder="Full name" required maxlength="100">
-                        </div>
-                        <!-- Student 2 -->
-                        <div class="form-group">
-                            <label for="add-student2Name" class="form-label">Student 2 <span class="text-muted text-sm">(optional)</span></label>
-                            <input type="text" name="student2Name" id="add-student2Name" class="form-control"
-                                   placeholder="Full name" maxlength="100">
-                        </div>
-                        <!-- Student 3 -->
-                        <div class="form-group">
-                            <label for="add-student3Name" class="form-label">Student 3 <span class="text-muted text-sm">(optional)</span></label>
-                            <input type="text" name="student3Name" id="add-student3Name" class="form-control"
-                                   placeholder="Full name" maxlength="100">
+                            <label for="add-teamLeadName" class="form-label">Team Lead Name <span class="required">*</span></label>
+                            <input type="text" name="teamLeadName" id="add-teamLeadName" class="form-control"
+                                   placeholder="Full name of team lead" required maxlength="100">
                         </div>
                     </div>
 
@@ -294,10 +281,8 @@
                             <th>#</th>
                             <th>Unique ID</th>
                             <th>College</th>
+                            <th>Team Lead</th>
                             <th>Lead Email</th>
-                            <th>Student 1</th>
-                            <th>Student 2</th>
-                            <th>Student 3</th>
                             <th>Total Points</th>
                             <th>Actions</th>
                         </tr>
@@ -308,10 +293,8 @@
                                 <td>${status.index + 1}</td>
                                 <td><strong style="color: var(--purple-700);"><c:out value="${team.uniqueId}"/></strong></td>
                                 <td><c:out value="${team.collegeName}"/></td>
+                                <td><c:out value="${team.teamLeadName}"/></td>
                                 <td style="font-size: 0.85rem;"><c:out value="${team.leadEmail}"/></td>
-                                <td><c:out value="${team.student1Name}"/></td>
-                                <td><c:out value="${team.student2Name}" default="—"/></td>
-                                <td><c:out value="${team.student3Name}" default="—"/></td>
                                 <td>
                                     <strong style="color: var(--gold-700);">
                                         <c:out value="${team.totalPoints}"/>
@@ -339,7 +322,7 @@
                         </c:forEach>
                         <c:if test="${empty teams}">
                             <tr>
-                                <td colspan="9" style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                                <td colspan="7" style="text-align: center; padding: 2rem; color: var(--gray-500);">
                                     No teams registered for <c:out value="${selectedQuiz}"/> yet.
                                 </td>
                             </tr>

@@ -119,7 +119,7 @@
                                 <th>#</th>
                                 <th>Unique ID</th>
                                 <th>College</th>
-                                <th>Student 1</th>
+                                <th>Team Lead</th>
                                 <th>Points</th>
                             </tr>
                         </thead>
@@ -130,7 +130,7 @@
                                     <td>${status.index + 1}</td>
                                     <td><strong style="color: var(--purple-700);"><c:out value="${team.uniqueId}"/></strong></td>
                                     <td><c:out value="${team.collegeName}"/></td>
-                                    <td><c:out value="${team.student1Name}"/></td>
+                                    <td><c:out value="${team.teamLeadName}"/></td>
                                     <td>
                                         <input type="number"
                                                name="score_${team.uniqueId}"

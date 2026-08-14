@@ -123,7 +123,7 @@ public class ScoreDAO {
         Map<String, LeaderboardEntry> entryMap = new LinkedHashMap<>();
 
         // Query 1: Get leaderboard totals
-        String sql1 = "SELECT unique_id, college_name, student1_name, student2_name, student3_name, quiz_code, total_points "
+        String sql1 = "SELECT unique_id, college_name, team_lead_name, quiz_code, total_points "
                      + "FROM leaderboard WHERE quiz_code = ? ORDER BY total_points DESC";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql1)) {
@@ -133,9 +133,7 @@ public class ScoreDAO {
                     LeaderboardEntry e = new LeaderboardEntry();
                     e.setUniqueId(rs.getString("unique_id"));
                     e.setCollegeName(rs.getString("college_name"));
-                    e.setStudent1Name(rs.getString("student1_name"));
-                    e.setStudent2Name(rs.getString("student2_name"));
-                    e.setStudent3Name(rs.getString("student3_name"));
+                    e.setTeamLeadName(rs.getString("team_lead_name"));
                     e.setQuizCode(rs.getString("quiz_code"));
                     e.setTotalPoints(rs.getDouble("total_points"));
                     entryMap.put(e.getUniqueId(), e);

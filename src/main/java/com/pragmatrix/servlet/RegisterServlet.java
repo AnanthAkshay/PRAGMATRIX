@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Handles team registration (admin-only).
- * POST /register → validate, insert team with lead email, send ID email, redirect to dashboard
+ * POST /register → validate, insert team with lead name + email, send ID email, redirect to dashboard
  */
 @WebServlet(name = "RegisterServlet", urlPatterns = {"/register"})
 public class RegisterServlet extends HttpServlet {
@@ -52,10 +52,8 @@ public class RegisterServlet extends HttpServlet {
 
         String quizCode = req.getParameter("quizCode");
         String collegeName = trim(req.getParameter("collegeName"));
+        String teamLeadName = trim(req.getParameter("teamLeadName"));
         String leadEmail = trim(req.getParameter("leadEmail"));
-        String student1 = trim(req.getParameter("student1Name"));
-        String student2 = trim(req.getParameter("student2Name"));
-        String student3 = trim(req.getParameter("student3Name"));
 
         // Determine redirect quiz tab
         String redirectQuiz = (quizCode != null) ? quizCode : "BIZWIZX";
@@ -70,13 +68,13 @@ public class RegisterServlet extends HttpServlet {
         if (collegeName == null || collegeName.isEmpty()) {
             errors.append("College name is required. ");
         }
+        if (teamLeadName == null || teamLeadName.isEmpty()) {
+            errors.append("Team lead name is required. ");
+        }
         if (leadEmail == null || leadEmail.isEmpty()) {
             errors.append("Team lead email is required. ");
         } else if (!isValidEmail(leadEmail)) {
             errors.append("Please enter a valid email address. ");
-        }
-        if (student1 == null || student1.isEmpty()) {
-            errors.append("At least one student name is required. ");
         }
 
         if (errors.length() > 0) {
@@ -91,8 +89,7 @@ public class RegisterServlet extends HttpServlet {
                 return;
             }
 
-            Team team = new Team(quizCode, collegeName, leadEmail, student1,
-                                 emptyToNull(student2), emptyToNull(student3));
+            Team team = new Team(quizCode, collegeName, teamLeadName, leadEmail);
 
             String uniqueId = teamDAO.insert(team, quiz.getIdPrefix());
 
@@ -118,10 +115,6 @@ public class RegisterServlet extends HttpServlet {
         return (s == null) ? null : s.trim();
     }
 
-    private String emptyToNull(String s) {
-        return (s == null || s.isEmpty()) ? null : s;
-    }
-
     /**
      * Basic email format validation.
      */
@@ -129,4 +122,3 @@ public class RegisterServlet extends HttpServlet {
         return email != null && email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     }
 }
-

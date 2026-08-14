@@ -10,13 +10,14 @@ CREATE DATABASE IF NOT EXISTS pragmatrix2026
 USE pragmatrix2026;
 
 -- ------------------------------------------------------------
--- Admin accounts (exactly 10 seeded accounts)
+-- Admin accounts
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS admins (
     admin_id    INT AUTO_INCREMENT PRIMARY KEY,
-    username    VARCHAR(50)  UNIQUE NOT NULL,
+    username    VARCHAR(150) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     full_name   VARCHAR(100),
+    email       VARCHAR(150) UNIQUE,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -33,14 +34,12 @@ CREATE TABLE IF NOT EXISTS quizzes (
 -- Teams / participants
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS teams (
-    unique_id     VARCHAR(15)  PRIMARY KEY,
-    quiz_code     VARCHAR(10)  NOT NULL,
-    college_name  VARCHAR(150) NOT NULL,
-    lead_email    VARCHAR(150) NOT NULL,
-    student1_name VARCHAR(100) NOT NULL,
-    student2_name VARCHAR(100),
-    student3_name VARCHAR(100),
-    registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    unique_id       VARCHAR(15)  PRIMARY KEY,
+    quiz_code       VARCHAR(10)  NOT NULL,
+    college_name    VARCHAR(150) NOT NULL,
+    team_lead_name  VARCHAR(100) NOT NULL,
+    lead_email      VARCHAR(150) NOT NULL,
+    registered_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_teams_quiz (quiz_code),
     INDEX idx_teams_college (college_name),
     FOREIGN KEY (quiz_code) REFERENCES quizzes(quiz_code)
@@ -123,14 +122,11 @@ CREATE OR REPLACE VIEW leaderboard AS
 SELECT
     t.unique_id,
     t.college_name,
-    t.student1_name,
-    t.student2_name,
-    t.student3_name,
+    t.team_lead_name,
     t.quiz_code,
     COALESCE(SUM(s.points), 0) AS total_points
 FROM teams t
 LEFT JOIN scores s ON t.unique_id = s.unique_id
 LEFT JOIN rounds r ON s.round_id = r.round_id AND r.is_finished = TRUE
-GROUP BY t.unique_id, t.college_name, t.student1_name,
-         t.student2_name, t.student3_name, t.quiz_code
+GROUP BY t.unique_id, t.college_name, t.team_lead_name, t.quiz_code
 ORDER BY total_points DESC;

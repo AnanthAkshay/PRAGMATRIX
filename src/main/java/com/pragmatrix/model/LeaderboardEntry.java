@@ -11,9 +11,7 @@ import java.util.Map;
 public class LeaderboardEntry {
     private String uniqueId;
     private String collegeName;
-    private String student1Name;
-    private String student2Name;
-    private String student3Name;
+    private String teamLeadName;
     private String quizCode;
     private double totalPoints;
 
@@ -28,14 +26,8 @@ public class LeaderboardEntry {
     public String getCollegeName() { return collegeName; }
     public void setCollegeName(String collegeName) { this.collegeName = collegeName; }
 
-    public String getStudent1Name() { return student1Name; }
-    public void setStudent1Name(String student1Name) { this.student1Name = student1Name; }
-
-    public String getStudent2Name() { return student2Name; }
-    public void setStudent2Name(String student2Name) { this.student2Name = student2Name; }
-
-    public String getStudent3Name() { return student3Name; }
-    public void setStudent3Name(String student3Name) { this.student3Name = student3Name; }
+    public String getTeamLeadName() { return teamLeadName; }
+    public void setTeamLeadName(String teamLeadName) { this.teamLeadName = teamLeadName; }
 
     public String getQuizCode() { return quizCode; }
     public void setQuizCode(String quizCode) { this.quizCode = quizCode; }
