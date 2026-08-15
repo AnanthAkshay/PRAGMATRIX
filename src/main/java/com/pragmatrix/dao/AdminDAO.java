@@ -16,6 +16,25 @@ public class AdminDAO {
     public static final int MAX_ADMIN_CAP = 10;
 
     /**
+     * Find an admin by username or email.
+     */
+    public Admin findByUsernameOrEmail(String identifier) throws SQLException {
+        if (identifier == null || identifier.trim().isEmpty()) return null;
+        String sql = "SELECT admin_id, username, password_hash, full_name, email, created_at FROM admins WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, identifier.trim());
+            ps.setString(2, identifier.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * Find an admin by username.
      */
     public Admin findByUsername(String username) throws SQLException {

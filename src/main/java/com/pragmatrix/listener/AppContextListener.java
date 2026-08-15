@@ -1,6 +1,7 @@
 package com.pragmatrix.listener;
 
 import com.pragmatrix.dao.AdminDAO;
+import com.pragmatrix.model.Admin;
 import com.pragmatrix.util.DBConnection;
 import com.pragmatrix.util.PasswordUtil;
 import jakarta.servlet.ServletContextEvent;
@@ -42,15 +43,28 @@ public class AppContextListener implements ServletContextListener {
     }
 
     /**
-     * Seed 2 admin accounts with bcrypt-hashed default passwords.
-     * Primary: svs262003@gmail.com ("Admin 1")
-     * Backup:  shirishvshandilya@gmail.com ("Admin 2 - Backup")
+     * Seed 10 admin accounts (admin1 to admin10) with bcrypt-hashed default password Pragmatrix@2026.
      */
     private void seedAdmins() throws Exception {
         AdminDAO dao = new AdminDAO();
         String hash = PasswordUtil.hashPassword(DEFAULT_PASSWORD);
 
-        dao.insertIfNotExists("svs262003@gmail.com", hash, "Admin 1", "svs262003@gmail.com");
-        dao.insertIfNotExists("shirishvshandilya@gmail.com", hash, "Admin 2 - Backup", "shirishvshandilya@gmail.com");
+        String[] numberWords = {"One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"};
+        for (int i = 1; i <= 10; i++) {
+            String username = "admin" + i;
+            String fullName = "Admin " + numberWords[i - 1];
+            String email = "admin" + i + "@pragmatrix.com";
+            seedOrUpdate(dao, username, hash, fullName, email);
+        }
+    }
+
+    private void seedOrUpdate(AdminDAO dao, String username, String hash, String fullName, String email) throws Exception {
+        Admin existing = dao.findByUsernameOrEmail(username);
+        if (existing == null) {
+            dao.insertIfNotExists(username, hash, fullName, email);
+        } else if (!PasswordUtil.checkPassword(DEFAULT_PASSWORD, existing.getPasswordHash())) {
+            dao.updatePassword(existing.getAdminId(), hash);
+            System.out.println("[PRAGMATRIX] Updated password hash for admin: " + username);
+        }
     }
 }

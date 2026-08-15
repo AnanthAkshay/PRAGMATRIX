@@ -44,11 +44,11 @@
 
             <form action="${pageContext.request.contextPath}/login" method="POST" id="login-form" novalidate>
                 <div class="form-group">
-                    <label for="email" class="form-label">Email Address <span class="required">*</span></label>
-                    <input type="email" name="email" id="email" class="form-control"
-                           placeholder="admin@pragmatrix.com"
+                    <label for="username" class="form-label">Username / Email <span class="required">*</span></label>
+                    <input type="text" name="username" id="username" class="form-control"
+                           placeholder="admin1 or email@example.com"
                            value="<c:out value='${email}'/>"
-                           required autocomplete="email">
+                           required autocomplete="username">
                 </div>
 
                 <div class="form-group">

@@ -55,20 +55,23 @@ public class AdminLoginServlet extends HttpServlet {
             throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
 
-        String email = req.getParameter("email");
+        String identifier = req.getParameter("username");
+        if (identifier == null || identifier.trim().isEmpty()) {
+            identifier = req.getParameter("email");
+        }
         String password = req.getParameter("password");
 
-        if (email != null) email = email.trim();
+        if (identifier != null) identifier = identifier.trim();
 
         // Validate basic inputs
-        if (email == null || email.isEmpty() || password == null || password.isEmpty()) {
-            req.setAttribute("error", "Email and password are required.");
-            req.setAttribute("email", email);
+        if (identifier == null || identifier.isEmpty() || password == null || password.isEmpty()) {
+            req.setAttribute("error", "Username and password are required.");
+            req.setAttribute("email", identifier);
             req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
             return;
         }
 
-        String emailKey = email.toLowerCase();
+        String emailKey = identifier.toLowerCase();
         long now = System.currentTimeMillis();
 
         // Check if account / IP is currently locked out
@@ -76,20 +79,20 @@ public class AdminLoginServlet extends HttpServlet {
         if (record != null && now < record.lockedUntil) {
             long remainingMinutes = Math.max(1, (record.lockedUntil - now + 59999L) / 60000L);
             req.setAttribute("error", "Too many failed login attempts. Account temporarily locked. Please try again in " + remainingMinutes + " minute(s).");
-            req.setAttribute("email", email);
+            req.setAttribute("email", identifier);
             req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
             return;
         }
 
         try {
-            Admin admin = adminDAO.findByEmail(emailKey);
+            Admin admin = adminDAO.findByUsernameOrEmail(emailKey);
 
-            // Generic error on failure to not reveal whether email exists
+            // Generic error on failure to not reveal whether user exists
             if (admin == null || !PasswordUtil.checkPassword(password, admin.getPasswordHash())) {
                 registerFailedAttempt(emailKey, now);
 
-                req.setAttribute("error", "Invalid email or password.");
-                req.setAttribute("email", email);
+                req.setAttribute("error", "Invalid username/email or password.");
+                req.setAttribute("email", identifier);
                 req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
                 return;
             }
@@ -110,7 +113,7 @@ public class AdminLoginServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             req.setAttribute("error", "An unexpected error occurred during login. Please try again.");
-            req.setAttribute("email", email);
+            req.setAttribute("email", identifier);
             req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
         }
     }
