@@ -1,0 +1,4 @@
+# PRAGMATRIX 2026 — Public App
+# Allow crawling of public pages but protect team dashboard area
+User-agent: *
+Disallow: /team/

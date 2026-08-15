@@ -1,0 +1,8 @@
+/* ============================================================
+   PRAGMATRIX 2026 — Style.css
+   Minimal reset companion to theme.css.
+   ============================================================ */
+
+/* All styles are in theme.css — this file serves as 
+   an import point for pages that previously referenced style.css */
+@import url('theme.css');

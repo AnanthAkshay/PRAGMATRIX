@@ -1,0 +1,4 @@
+# PRAGMATRIX 2026 — Admin App
+# Block all crawling — admin portal should not be indexed
+User-agent: *
+Disallow: /
