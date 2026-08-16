@@ -94,6 +94,21 @@ public class EmailService {
     }
 
     /**
+     * Send 6-digit OTP email for Admin Login.
+     */
+    public static boolean sendAdminOtpEmail(String toEmail, String otpCode) {
+        String subject = "PRAGMATRIX 2026 Admin Login OTP";
+        String body = "Dear Admin,\n\n"
+                + "Your 6-digit OTP for PRAGMATRIX 2026 Admin Login is:\n\n"
+                + "      " + otpCode + "\n\n"
+                + "This OTP is valid for 5 minutes. Do not share this code with anyone.\n\n"
+                + "If you did not request this login code, please ignore this email.\n\n"
+                + "Warm regards,\n"
+                + "Team PRAGMATRIX 2026";
+        return sendEmail(toEmail, subject, body);
+    }
+
+    /**
      * Core email-sending method.
      */
     private static boolean sendEmail(String toEmail, String subject, String body) {

@@ -20,6 +20,9 @@
             </a>
             <div class="header-links">
                 <a href="${pageContext.request.contextPath}/admin/dashboard" class="active">Dashboard</a>
+                <c:if test="${selectedQuiz == 'VORTEX'}">
+                    <a href="${pageContext.request.contextPath}/admin/manage-criteria">Manage Criteria</a>
+                </c:if>
                 <a href="${pageContext.request.contextPath}/admin/leaderboard?quiz=${selectedQuiz}">Leaderboard</a>
                 <a href="${pageContext.request.contextPath}/admin/admins">Admins</a>
             </div>
@@ -227,6 +230,13 @@
                                 </c:choose>
                             </a>
 
+                            <c:if test="${selectedQuiz == 'VORTEX'}">
+                                <a href="${pageContext.request.contextPath}/admin/manage-criteria?roundId=${round.roundNumber}"
+                                   class="btn btn-outline btn-sm" id="btn-criteria-${round.roundId}">
+                                    Criteria
+                                </a>
+                            </c:if>
+
                             <c:if test="${!round.finished}">
                                 <button type="button" class="btn btn-outline btn-sm" onclick="toggleEdit(${round.roundId})" id="btn-edit-${round.roundId}">
                                     Edit
@@ -313,8 +323,16 @@
                                             <button type="submit" class="btn btn-sm btn-outline" title="Resend ID Email"
                                                     style="padding: 0.3rem 0.6rem; font-size: 0.75rem;"
                                                     onclick="return confirm('Resend participant ID email to this team?')">
-                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                                                 Resend
+                                            </button>
+                                        </form>
+                                        <form action="${pageContext.request.contextPath}/admin/delete-team" method="POST" style="display:inline;">
+                                            <input type="hidden" name="uniqueId" value="${team.uniqueId}">
+                                            <input type="hidden" name="quizCode" value="${selectedQuiz}">
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Remove Team"
+                                                    style="padding: 0.3rem 0.6rem; font-size: 0.75rem;"
+                                                    onclick="return confirm('Are you sure you want to remove team ${team.uniqueId} (${team.collegeName})? This cannot be undone.')">
+                                                Remove
                                             </button>
                                         </form>
                                     </div>

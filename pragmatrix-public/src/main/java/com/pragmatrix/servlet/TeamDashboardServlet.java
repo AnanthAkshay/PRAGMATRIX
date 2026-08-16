@@ -3,9 +3,11 @@ package com.pragmatrix.servlet;
 import com.pragmatrix.dao.RoundDAO;
 import com.pragmatrix.dao.ScoreDAO;
 import com.pragmatrix.dao.TeamDAO;
+import com.pragmatrix.dao.VortexCriteriaDAO;
 import com.pragmatrix.model.Round;
 import com.pragmatrix.model.Score;
 import com.pragmatrix.model.Team;
+import com.pragmatrix.model.VortexRound;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -14,11 +16,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Team Dashboard — displays team details and round-wise scores.
+ * Team Dashboard — displays team details, round-wise scores, and read-only VORTEX judging criteria.
  * Guarded by TeamAuthFilter (/team/*).
  *
  * GET /team/dashboard → display team dashboard
@@ -29,6 +32,7 @@ public class TeamDashboardServlet extends HttpServlet {
     private final TeamDAO teamDAO = new TeamDAO();
     private final RoundDAO roundDAO = new RoundDAO();
     private final ScoreDAO scoreDAO = new ScoreDAO();
+    private final VortexCriteriaDAO vortexDAO = new VortexCriteriaDAO();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -62,23 +66,20 @@ public class TeamDashboardServlet extends HttpServlet {
                 }
             }
 
-            // Calculate rank
-            List<Team> allTeams = teamDAO.findByQuizCode(team.getQuizCode());
-            allTeams.sort((a, b) -> Double.compare(b.getTotalPoints(), a.getTotalPoints()));
-            int rank = 0;
-            for (int i = 0; i < allTeams.size(); i++) {
-                if (allTeams.get(i).getUniqueId().equals(teamCode)) {
-                    rank = i + 1;
-                    break;
+            // If VORTEX, load VORTEX judging criteria structure for read-only view
+            if ("VORTEX".equalsIgnoreCase(team.getQuizCode())) {
+                List<VortexRound> vRounds = vortexDAO.getAllRounds();
+                Map<Integer, VortexRound> vortexRoundsMap = new HashMap<>();
+                for (VortexRound vr : vRounds) {
+                    vortexRoundsMap.put(vr.getDisplayOrder(), vr);
                 }
+                req.setAttribute("vortexRoundsMap", vortexRoundsMap);
             }
 
             req.setAttribute("team", team);
             req.setAttribute("rounds", rounds);
             req.setAttribute("scoreMap", scoreMap);
             req.setAttribute("totalPoints", totalPoints);
-            req.setAttribute("rank", rank);
-            req.setAttribute("totalTeams", allTeams.size());
 
             req.getRequestDispatcher("/WEB-INF/views/team-dashboard.jsp").forward(req, resp);
 

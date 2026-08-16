@@ -167,6 +167,18 @@ public class TeamDAO {
         return 0;
     }
 
+    /**
+     * Delete a team by unique ID. Cascades deletion of all associated scores and session tokens.
+     */
+    public boolean deleteByUniqueId(String uniqueId) throws SQLException {
+        String sql = "DELETE FROM teams WHERE unique_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, uniqueId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     private Team mapRow(ResultSet rs) throws SQLException {
         Team t = new Team();
         t.setUniqueId(rs.getString("unique_id"));

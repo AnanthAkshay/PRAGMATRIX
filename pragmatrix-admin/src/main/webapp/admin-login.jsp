@@ -11,18 +11,10 @@
 </head>
 <body>
 
-    <!-- Header -->
-    <header class="site-header">
-        <nav class="header-nav">
-            <a href="${pageContext.request.contextPath}/" class="header-brand">
-                <img src="${pageContext.request.contextPath}/images/set-logo.jpg" alt="Seshadripuram Educational Trust" class="brand-logo" style="border-radius: 50%;">
-                <span class="brand-text">Pragmatrix 2026</span>
-            </a>
-            <div class="header-links">
-                <a href="${pageContext.request.contextPath}/">Home</a>
-            </div>
-        </nav>
-    </header>
+    <!-- Full Header Branding Block -->
+    <div style="padding-top: 1rem;">
+        <jsp:include page="/includes/header-branding.jsp" />
+    </div>
 
     <!-- Login Form -->
     <div class="centered-form-wrapper">
@@ -30,7 +22,7 @@
             <div class="form-card-header">
                 <img src="${pageContext.request.contextPath}/images/pragmatrix-crest.png" alt="PRAGMATRIX 2026" class="form-logo" style="height: 90px; width: auto;">
                 <h2>Admin Portal</h2>
-                <p>Sign in to manage quizzes, rounds, and scores</p>
+                <p>Enter your authorized email to receive a 6-digit OTP</p>
             </div>
 
             <!-- Error alert -->
@@ -43,27 +35,19 @@
 
             <form action="${pageContext.request.contextPath}/login" method="POST" id="login-form" novalidate>
                 <div class="form-group">
-                    <label for="username" class="form-label">Username / Email <span class="required">*</span></label>
-                    <input type="text" name="username" id="username" class="form-control"
-                           placeholder="admin1 or email@example.com"
+                    <label for="email" class="form-label">Authorized Admin Email <span class="required">*</span></label>
+                    <input type="email" name="email" id="email" class="form-control"
+                           placeholder="svs262003@gmail.com or ananthakshay2006@gmail.com"
                            value="<c:out value='${email}'/>"
-                           required autocomplete="username">
-                </div>
-
-                <div class="form-group">
-                    <label for="password" class="form-label">Password <span class="required">*</span></label>
-                    <input type="password" name="password" id="password" class="form-control"
-                           placeholder="Enter your password"
-                           required autocomplete="current-password">
+                           required autocomplete="email">
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-lg w-100" id="btn-login">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-                        <polyline points="10 17 15 12 10 7"/>
-                        <line x1="15" y1="12" x2="3" y2="12"/>
+                        <path d="M22 2L11 13"/>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
                     </svg>
-                    Sign In
+                    Send OTP
                 </button>
             </form>
 
@@ -76,8 +60,7 @@
     <script>
     document.getElementById('login-form').addEventListener('submit', function(e) {
         var email = document.getElementById('email').value.trim();
-        var password = document.getElementById('password').value;
-        if (!email || !password) {
+        if (!email) {
             e.preventDefault();
             var alertDiv = document.getElementById('login-error');
             if (!alertDiv) {
@@ -86,7 +69,7 @@
                 alertDiv.className = 'alert alert-error';
                 document.querySelector('.form-card-header').insertAdjacentElement('afterend', alertDiv);
             }
-            alertDiv.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Email and password are required.';
+            alertDiv.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Email address is required.';
         }
     });
     </script>

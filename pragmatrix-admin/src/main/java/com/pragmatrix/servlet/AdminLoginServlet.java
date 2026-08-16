@@ -1,8 +1,6 @@
 package com.pragmatrix.servlet;
 
-import com.pragmatrix.dao.AdminDAO;
-import com.pragmatrix.model.Admin;
-import com.pragmatrix.util.PasswordUtil;
+import com.pragmatrix.util.EmailService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -11,37 +9,34 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
+import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.List;
 
 /**
- * Handles admin authentication via email + hashed password (no OTP).
- * Features rate-limiting to prevent brute force attacks.
+ * Handles admin authentication step 1 (Email input -> OTP generation).
+ * Restricted strictly to 2 authorized email addresses:
+ * 1. svs262003@gmail.com
+ * 2. ananthakshay2006@gmail.com
  *
- * GET  /login → display login form
- * POST /login → authenticate admin, create session, redirect to dashboard
+ * GET  /login -> display admin email login form
+ * POST /login -> validate email, generate 6-digit OTP, send email, forward to OTP verification
  */
 @WebServlet(name = "AdminLoginServlet", urlPatterns = {"/login"})
 public class AdminLoginServlet extends HttpServlet {
 
-    private final AdminDAO adminDAO = new AdminDAO();
+    private static final List<String> AUTHORIZED_ADMIN_EMAILS = Arrays.asList(
+            "svs262003@gmail.com",
+            "ananthakshay2006@gmail.com"
+    );
 
-    // Rate-limiting configuration: max 5 failed attempts = 5 min lockout
-    private static final int MAX_FAILED_ATTEMPTS = 5;
-    private static final long LOCKOUT_DURATION_MS = 5 * 60 * 1000L; // 5 minutes
-    private static final long ATTEMPT_WINDOW_MS = 15 * 60 * 1000L;   // 15 minutes
-
-    private static class AttemptRecord {
-        int failedCount = 0;
-        long firstAttemptTime = System.currentTimeMillis();
-        long lockedUntil = 0;
-    }
-
-    private static final ConcurrentHashMap<String, AttemptRecord> ATTEMPT_CACHE = new ConcurrentHashMap<>();
+    private static final long OTP_EXPIRY_MS = 5 * 60 * 1000L; // 5 minutes
+    private static final long RATE_LIMIT_MS = 30 * 1000L;     // 30 seconds between resends
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        // If already authenticated, redirect directly to admin dashboard
         HttpSession session = req.getSession(false);
         if (session != null && session.getAttribute("adminId") != null) {
             resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
@@ -55,79 +50,60 @@ public class AdminLoginServlet extends HttpServlet {
             throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
 
-        String identifier = req.getParameter("username");
-        if (identifier == null || identifier.trim().isEmpty()) {
-            identifier = req.getParameter("email");
+        String emailInput = req.getParameter("email");
+        if (emailInput == null || emailInput.trim().isEmpty()) {
+            emailInput = req.getParameter("username");
         }
-        String password = req.getParameter("password");
 
-        if (identifier != null) identifier = identifier.trim();
-
-        // Validate basic inputs
-        if (identifier == null || identifier.isEmpty() || password == null || password.isEmpty()) {
-            req.setAttribute("error", "Username and password are required.");
-            req.setAttribute("email", identifier);
+        if (emailInput == null || emailInput.trim().isEmpty()) {
+            req.setAttribute("error", "Please enter your email address.");
             req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
             return;
         }
 
-        String emailKey = identifier.toLowerCase();
+        String email = emailInput.trim().toLowerCase();
+
+        // 1. Strict 2-email restriction check
+        if (!AUTHORIZED_ADMIN_EMAILS.contains(email)) {
+            req.setAttribute("error", "This email is not authorized for admin access.");
+            req.setAttribute("email", emailInput);
+            req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
+            return;
+        }
+
+        HttpSession session = req.getSession(true);
+
+        // 2. Rate limiting check
+        Long lastSent = (Long) session.getAttribute("admin_otp_last_sent");
         long now = System.currentTimeMillis();
-
-        // Check if account / IP is currently locked out
-        AttemptRecord record = ATTEMPT_CACHE.get(emailKey);
-        if (record != null && now < record.lockedUntil) {
-            long remainingMinutes = Math.max(1, (record.lockedUntil - now + 59999L) / 60000L);
-            req.setAttribute("error", "Too many failed login attempts. Account temporarily locked. Please try again in " + remainingMinutes + " minute(s).");
-            req.setAttribute("email", identifier);
+        if (lastSent != null && (now - lastSent < RATE_LIMIT_MS)) {
+            long remainingSec = (RATE_LIMIT_MS - (now - lastSent)) / 1000L + 1;
+            req.setAttribute("error", "Please wait " + remainingSec + " second(s) before requesting a new OTP.");
+            req.setAttribute("email", emailInput);
             req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
             return;
         }
 
-        try {
-            Admin admin = adminDAO.findByUsernameOrEmail(emailKey);
+        // 3. Generate 6-digit numeric OTP
+        String otpCode = String.format("%06d", RANDOM.nextInt(1000000));
+        long expiryTime = now + OTP_EXPIRY_MS;
 
-            // Generic error on failure to not reveal whether user exists
-            if (admin == null || !PasswordUtil.checkPassword(password, admin.getPasswordHash())) {
-                registerFailedAttempt(emailKey, now);
+        session.setAttribute("admin_pending_email", email);
+        session.setAttribute("admin_otp_code", otpCode);
+        session.setAttribute("admin_otp_expiry", expiryTime);
+        session.setAttribute("admin_otp_last_sent", now);
 
-                req.setAttribute("error", "Invalid username/email or password.");
-                req.setAttribute("email", identifier);
-                req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
-                return;
-            }
-
-            // Authentication successful: clear failed attempts
-            ATTEMPT_CACHE.remove(emailKey);
-
-            // Create admin session
-            HttpSession session = req.getSession(true);
-            session.setAttribute("adminId", admin.getAdminId());
-            session.setAttribute("adminName", admin.getFullName());
-            session.setAttribute("adminEmail", admin.getEmail());
-            session.setAttribute("adminUsername", admin.getUsername());
-            session.setMaxInactiveInterval(60 * 60); // 60 minutes session
-
-            resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            req.setAttribute("error", "An unexpected error occurred during login. Please try again.");
-            req.setAttribute("email", identifier);
-            req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
+        // 4. Send OTP email via SMTP
+        boolean sent = EmailService.sendAdminOtpEmail(email, otpCode);
+        if (!sent) {
+            System.err.println("[ADMIN-LOGIN] Warning: Email failed to send via SMTP. Generated OTP: " + otpCode);
         }
+
+        req.setAttribute("message", "A 6-digit OTP has been sent to " + email + ". It will expire in 5 minutes.");
+        req.getRequestDispatcher("/admin-otp-verify.jsp").forward(req, resp);
     }
 
-    private void registerFailedAttempt(String emailKey, long now) {
-        ATTEMPT_CACHE.compute(emailKey, (k, v) -> {
-            if (v == null || (now - v.firstAttemptTime > ATTEMPT_WINDOW_MS && now > v.lockedUntil)) {
-                v = new AttemptRecord();
-            }
-            v.failedCount++;
-            if (v.failedCount >= MAX_FAILED_ATTEMPTS) {
-                v.lockedUntil = now + LOCKOUT_DURATION_MS;
-            }
-            return v;
-        });
+    public static List<String> getAuthorizedAdminEmails() {
+        return AUTHORIZED_ADMIN_EMAILS;
     }
 }

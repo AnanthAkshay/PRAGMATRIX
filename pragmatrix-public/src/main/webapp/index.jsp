@@ -23,12 +23,6 @@
                 </svg>
                 Team Login
             </a>
-            <a href="${pageContext.request.contextPath}/leaderboard" class="btn btn-secondary btn-lg" id="btn-leaderboard">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 6 9 6 9m12 0h1.5a2.5 2.5 0 0 0 0-5C17 4 18 9 18 9m-12 0a6 6 0 0 0 12 0M6 9h12m-6 9v3m-4 0h8"/>
-                </svg>
-                View Leaderboard
-            </a>
         </div>
     </section>
 

@@ -75,7 +75,6 @@
             </a>
             <div class="header-links">
                 <a href="${pageContext.request.contextPath}/">Home</a>
-                <a href="${pageContext.request.contextPath}/leaderboard">Leaderboard</a>
             </div>
             <div class="admin-info">
                 <span class="admin-name">
@@ -92,7 +91,7 @@
         <div class="d-flex justify-between align-center flex-wrap gap-md mb-2">
             <div>
                 <h1 class="page-title">Team Dashboard</h1>
-                <p class="page-subtitle">Your scores and standings for <c:out value="${team.quizCode}"/></p>
+                <p class="page-subtitle">Your scores and round progress for <c:out value="${team.quizCode}"/></p>
             </div>
             <div class="live-indicator" id="live-indicator">
                 <span class="live-dot"></span>
@@ -130,23 +129,10 @@
         </div>
 
         <!-- ===== STATS ROW ===== -->
-        <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); margin-bottom: 1.5rem;">
+        <div class="card-grid" style="grid-template-columns: minmax(180px, 300px); margin-bottom: 1.5rem;">
             <div class="stat-card">
                 <div class="stat-value" id="stat-total-points"><c:out value="${totalPoints}"/></div>
                 <div class="stat-label">Total Points</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="stat-rank">
-                    <c:choose>
-                        <c:when test="${rank > 0}">#<c:out value="${rank}"/></c:when>
-                        <c:otherwise>—</c:otherwise>
-                    </c:choose>
-                </div>
-                <div class="stat-label">Current Rank</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="stat-total-teams"><c:out value="${totalTeams}"/></div>
-                <div class="stat-label">Teams in <c:out value="${team.quizCode}"/></div>
             </div>
         </div>
 
@@ -165,6 +151,9 @@
                             <th>Judging Criteria</th>
                             <th>Status</th>
                             <th>Points</th>
+                            <c:if test="${team.quizCode == 'VORTEX'}">
+                                <th>Criteria</th>
+                            </c:if>
                         </tr>
                     </thead>
                     <tbody id="scores-tbody">
@@ -208,11 +197,20 @@
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
+                                <c:if test="${team.quizCode == 'VORTEX'}">
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline"
+                                                onclick="openCriteriaModal(${round.roundNumber})"
+                                                style="color: var(--purple-700); border-color: var(--purple-600); padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                            View Judging Criteria
+                                        </button>
+                                    </td>
+                                </c:if>
                             </tr>
                         </c:forEach>
                         <c:if test="${empty rounds}">
                             <tr>
-                                <td colspan="5" style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                                <td colspan="${team.quizCode == 'VORTEX' ? 6 : 5}" style="text-align: center; padding: 2rem; color: var(--gray-500);">
                                     No rounds configured yet.
                                 </td>
                             </tr>
@@ -229,6 +227,102 @@
         </div>
 
     </div><!-- /page-container -->
+
+    <!-- ===== VORTEX JUDGING CRITERIA READ-ONLY MODAL ===== -->
+    <c:if test="${team.quizCode == 'VORTEX'}">
+        <div id="criteria-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; padding: 1rem;">
+            <div class="glass-panel" style="max-width: 700px; width: 100%; max-height: 85vh; overflow-y: auto; position: relative; border: 1px solid var(--gold-600);">
+                <div class="d-flex justify-between align-center mb-2" style="border-bottom: 1px solid rgba(212,175,55,0.2); padding-bottom: 0.75rem;">
+                    <h3 style="font-family: var(--font-display); color: var(--gold-700); margin: 0;" id="modal-round-title">
+                        Judging Criteria
+                    </h3>
+                    <button type="button" onclick="closeCriteriaModal()" style="background: none; border: none; font-size: 1.5rem; color: var(--gray-400); cursor: pointer;">&times;</button>
+                </div>
+
+                <div id="modal-content">
+                    <!-- Loaded dynamically per round -->
+                    <c:forEach var="vEntry" items="${vortexRoundsMap}">
+                        <c:set var="vRound" value="${vEntry.value}"/>
+                        <div class="vround-details" id="vround-details-${vRound.displayOrder}" style="display: none;">
+                            <div class="mb-2">
+                                <span class="badge" style="background: rgba(147,51,234,0.1); color: var(--purple-700); font-weight: 700;">
+                                    Total Round Marks: ${vRound.totalMaxMarks} Marks
+                                </span>
+                            </div>
+
+                            <c:forEach var="vComp" items="${vRound.components}">
+                                <div style="margin-bottom: 1.5rem;">
+                                    <h4 style="color: var(--gold-600); margin: 0 0 0.5rem 0; font-size: 1.05rem;">
+                                        <c:out value="${vComp.componentLabel}"/>
+                                        <span style="font-size: 0.85rem; color: var(--gray-500); font-weight: normal;">
+                                            (${vComp.maxMarks} Marks)
+                                        </span>
+                                    </h4>
+
+                                    <table class="themed-table" style="font-size: 0.9rem;">
+                                        <thead>
+                                            <tr>
+                                                <th>Criterion</th>
+                                                <th>Judges Look For</th>
+                                                <th style="width: 80px; text-align: center;">Max</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <c:forEach var="vCrit" items="${vComp.criteria}">
+                                                <tr>
+                                                    <td><strong><c:out value="${vCrit.criterionName}"/></strong></td>
+                                                    <td style="color: var(--gray-600); font-style: italic;">
+                                                        <c:choose>
+                                                            <c:when test="${not empty vCrit.judgesLookFor}">
+                                                                &ldquo;<c:out value="${vCrit.judgesLookFor}"/>&rdquo;
+                                                            </c:when>
+                                                            <c:otherwise>&mdash;</c:otherwise>
+                                                        </c:choose>
+                                                    </td>
+                                                    <td style="text-align: center;"><strong style="color: var(--gold-700);">${vCrit.maxMarks}</strong></td>
+                                                </tr>
+                                            </c:forEach>
+                                            <c:if test="${empty vComp.criteria}">
+                                                <tr>
+                                                    <td colspan="3" style="text-align: center; color: var(--gray-500);">No criteria defined yet.</td>
+                                                </tr>
+                                            </c:if>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </c:forEach>
+
+                            <c:if test="${empty vRound.components}">
+                                <p style="text-align: center; color: var(--gray-500); padding: 1.5rem;">
+                                    Judging criteria for this round will be defined by the organizers soon.
+                                </p>
+                            </c:if>
+                        </div>
+                    </c:forEach>
+                </div>
+
+                <div class="d-flex justify-end mt-2">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="closeCriteriaModal()">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        function openCriteriaModal(roundNumber) {
+            document.querySelectorAll('.vround-details').forEach(function(el) { el.style.display = 'none'; });
+            var target = document.getElementById('vround-details-' + roundNumber);
+            if (target) {
+                target.style.display = 'block';
+                document.getElementById('modal-round-title').textContent = 'Round ' + roundNumber + ' Judging Criteria';
+                document.getElementById('criteria-modal').style.display = 'flex';
+            }
+        }
+
+        function closeCriteriaModal() {
+            document.getElementById('criteria-modal').style.display = 'none';
+        }
+        </script>
+    </c:if>
 
     <!-- Footer -->
     <footer class="site-footer">

@@ -11,28 +11,27 @@
 </head>
 <body>
 
-    <!-- Header -->
-    <header class="site-header">
-        <nav class="header-nav">
-            <a href="${pageContext.request.contextPath}/" class="header-brand">
-                <img src="${pageContext.request.contextPath}/images/archway-bg.jpeg" alt="PRAGMATRIX" class="brand-logo">
-                <span class="brand-text">Pragmatrix 2026</span>
-            </a>
-            <div class="header-links">
-                <a href="${pageContext.request.contextPath}/">Home</a>
-                <a href="${pageContext.request.contextPath}/login">Back</a>
-            </div>
-        </nav>
-    </header>
+    <!-- Full Header Branding Block -->
+    <div style="padding-top: 1rem;">
+        <jsp:include page="/includes/header-branding.jsp" />
+    </div>
 
     <!-- OTP Verify Form -->
     <div class="centered-form-wrapper">
         <div class="centered-form-card glass-panel">
             <div class="form-card-header">
-                <img src="${pageContext.request.contextPath}/images/archway-bg.jpeg" alt="PRAGMATRIX 2026" class="form-logo">
-                <h2>Verify OTP</h2>
-                <p>An OTP has been sent to your email.</p>
+                <img src="${pageContext.request.contextPath}/images/pragmatrix-crest.png" alt="PRAGMATRIX 2026" class="form-logo" style="height: 90px; width: auto;">
+                <h2>Verify Admin OTP</h2>
+                <p>An OTP has been sent to <strong><c:out value="${sessionScope.admin_pending_email}"/></strong></p>
             </div>
+
+            <!-- Success message alert -->
+            <c:if test="${not empty message}">
+                <div class="alert alert-success" id="info-alert">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    <c:out value="${message}"/>
+                </div>
+            </c:if>
 
             <!-- Error alert -->
             <c:if test="${not empty error}">
@@ -43,15 +42,14 @@
             </c:if>
 
             <form action="${pageContext.request.contextPath}/admin-otp-verify" method="POST" id="otp-form" novalidate>
-
                 <!-- OTP Input -->
                 <div class="form-group">
-                    <label for="otp" class="form-label">One-Time Password <span class="required">*</span></label>
+                    <label for="otp" class="form-label">6-Digit One-Time Password <span class="required">*</span></label>
                     <input type="text" name="otp" id="otp" class="form-control"
-                           placeholder="Enter 6-digit OTP"
+                           placeholder="──────"
                            required maxlength="6" pattern="[0-9]{6}"
                            inputmode="numeric" autocomplete="one-time-code"
-                           style="font-family: var(--font-display); font-size: 1.5rem; letter-spacing: 8px; text-align: center;">
+                           style="font-family: var(--font-display); font-size: 1.6rem; letter-spacing: 10px; text-align: center;">
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-lg w-100" id="btn-verify-otp">
@@ -59,12 +57,21 @@
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                         <polyline points="22 4 12 14.01 9 11.01"/>
                     </svg>
-                    Verify &amp; Login
+                    Verify &amp; Sign In
                 </button>
             </form>
 
+            <div style="margin-top: 1rem; text-align: center;">
+                <form action="${pageContext.request.contextPath}/admin-otp-verify" method="POST" style="display: inline;">
+                    <input type="hidden" name="action" value="resend">
+                    <button type="submit" class="btn btn-sm btn-outline" style="color: var(--gold-700); border-color: var(--gold-600);">
+                        Resend OTP
+                    </button>
+                </form>
+            </div>
+
             <div class="form-footer">
-                <a href="${pageContext.request.contextPath}/login">&larr; Return to login</a>
+                <a href="${pageContext.request.contextPath}/login">&larr; Return to Admin Login</a>
             </div>
         </div>
     </div>
