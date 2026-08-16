@@ -12,99 +12,148 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 /**
- * Manages a HikariCP connection pool for the PRAGMATRIX 2026 application.
- * Shared across both Public and Admin web application contexts.
+ * Database Connection & Connection Pool Manager using HikariCP.
  *
- * <p>Configuration Resolution Order:
+ * Configuration precedence:
  * <ol>
- *   <li><b>Environment Variables</b>: DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD (with SSL required for Aiven/cloud DB).</li>
- *   <li><b>Local Fallback Properties</b>: {@code db.local.properties} (classpath or root directory).</li>
- *   <li><b>Default Properties</b>: {@code db.properties} on classpath.</li>
+ *   <li><b>OS Environment Variables (System.getenv)</b>: DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD</li>
+ *   <li><b>JVM System Properties (System.getProperty)</b>: -DDB_HOST=... or -Ddb.host=...</li>
+ *   <li><b>Local Properties file</b>: {@code db.local.properties} (classpath or working directory)</li>
+ *   <li><b>Default Properties file</b>: {@code db.properties} on classpath</li>
  * </ol>
- * </p>
  */
 public class DBConnection {
+
+    private static final int DEFAULT_MAX_POOL_SIZE = 10;
+    private static final int DEFAULT_MIN_IDLE = 2;
+    private static final long DEFAULT_CONNECTION_TIMEOUT = 30000; // 30s
+    private static final long DEFAULT_IDLE_TIMEOUT = 600000;      // 10 min
+    private static final long DEFAULT_MAX_LIFETIME = 1800000;     // 30 min
 
     private static volatile HikariDataSource dataSource;
     private static final Object LOCK = new Object();
 
-    // Default Conservative Pool Configuration (tuned for cloud/Aiven connection limits)
-    private static final int DEFAULT_MAX_POOL_SIZE = 10;
-    private static final int DEFAULT_MIN_IDLE = 2;
-    private static final long DEFAULT_CONNECTION_TIMEOUT = 30000L;
-    private static final long DEFAULT_IDLE_TIMEOUT = 600000L;
-    private static final long DEFAULT_MAX_LIFETIME = 1800000L;
-
-    private DBConnection() {} // utility class
+    private DBConnection() {}
 
     /**
-     * Initialise the HikariCP pool. Called once on startup or lazily on first connection.
+     * Initialises the HikariCP DataSource.
      */
     public static void init() {
-        if (dataSource != null && !dataSource.isClosed()) return;
-
-        synchronized (LOCK) {
-            if (dataSource != null && !dataSource.isClosed()) return;
-
-            HikariConfig config = buildHikariConfig();
-            dataSource = new HikariDataSource(config);
-            System.out.println("[PRAGMATRIX-DB] HikariCP Connection Pool initialised successfully. (Max Pool: "
-                    + config.getMaximumPoolSize() + ", URL: " + config.getJdbcUrl() + ")");
+        if (dataSource == null) {
+            synchronized (LOCK) {
+                if (dataSource == null) {
+                    try {
+                        HikariConfig config = createHikariConfig();
+                        dataSource = new HikariDataSource(config);
+                        System.out.println("[PRAGMATRIX-DB] HikariCP Connection Pool initialised successfully. (Max Pool: "
+                                + config.getMaximumPoolSize() + ", Min Idle: " + config.getMinimumIdle() + ")");
+                    } catch (Exception e) {
+                        System.err.println("[PRAGMATRIX-DB] FATAL: Failed to initialise database connection pool: " + e.getMessage());
+                        e.printStackTrace();
+                        throw new RuntimeException("Database initialisation failed", e);
+                    }
+                }
+            }
         }
     }
 
     /**
-     * Builds HikariConfig from environment variables or fallback properties.
+     * Builds HikariConfig by checking System.getenv() first, then falling back to property files.
      */
-    private static HikariConfig buildHikariConfig() {
-        Properties fileProps = loadFallbackProperties();
+    private static HikariConfig createHikariConfig() {
+        // Step 1: Probe Environment Variables (System.getenv) & JVM System Properties directly first
+        String host = getFromEnvOrSystem("DB_HOST", "db.host", "MYSQL_HOST", "MYSQLHOST");
+        String port = getFromEnvOrSystem("DB_PORT", "db.port", "MYSQL_PORT", "MYSQLPORT");
+        String name = getFromEnvOrSystem("DB_NAME", "db.name", "MYSQL_DATABASE", "MYSQLDATABASE", "DB_DATABASE");
+        String user = getFromEnvOrSystem("DB_USER", "db.user", "DB_USERNAME", "db.username", "MYSQL_USER", "MYSQLUSER");
+        String pass = getFromEnvOrSystem("DB_PASSWORD", "db.password", "MYSQL_PASSWORD", "MYSQLPASSWORD", "DB_PASS");
 
-        String envHost = getEnvOrProp("DB_HOST", "db.host", fileProps);
-        String envPort = getEnvOrProp("DB_PORT", "db.port", fileProps, "3306");
-        String envName = getEnvOrProp("DB_NAME", "db.name", fileProps);
-        String envUser = getEnvOrProp("DB_USER", "db.user", fileProps);
-        if (envUser == null) {
-            envUser = getEnvOrProp("DB_USERNAME", "db.username", fileProps);
+        Properties fileProps = null;
+        boolean usingEnvVars = (host != null && !host.trim().isEmpty() && name != null && !name.trim().isEmpty());
+
+        System.out.println("================================================================================");
+        System.out.println("[PRAGMATRIX-DB] Initialising Database Configuration...");
+
+        if (usingEnvVars) {
+            System.out.println("[PRAGMATRIX-DB] Configuration Source : ENVIRONMENT VARIABLES (System.getenv)");
+            System.out.println("[PRAGMATRIX-DB] DB_HOST              : " + host.trim());
+            System.out.println("[PRAGMATRIX-DB] DB_PORT              : " + (port != null && !port.trim().isEmpty() ? port.trim() : "3306 (default)"));
+            System.out.println("[PRAGMATRIX-DB] DB_NAME              : " + name.trim());
+            System.out.println("[PRAGMATRIX-DB] DB_USER              : " + (user != null ? user.trim() : "[NOT SET]"));
+            System.out.println("[PRAGMATRIX-DB] DB_PASSWORD          : " + (pass != null && !pass.trim().isEmpty() ? "[SET (length " + pass.trim().length() + ")]" : "[NOT SET]"));
+            System.out.println("[PRAGMATRIX-DB] SSL Mode             : REQUIRED (useSSL=true&requireSSL=true&sslMode=REQUIRED)");
+        } else {
+            System.out.println("[PRAGMATRIX-DB] No DB_HOST / DB_NAME environment variables detected.");
+            System.out.println("[PRAGMATRIX-DB] Attempting fallback to properties files (db.local.properties / db.properties)...");
+            fileProps = loadFallbackProperties();
+
+            // Check if fallback files defined host/name or a direct db.url
+            if (host == null || host.trim().isEmpty()) {
+                host = getPropValue(fileProps, "DB_HOST", "db.host");
+            }
+            if (port == null || port.trim().isEmpty()) {
+                port = getPropValue(fileProps, "DB_PORT", "db.port");
+            }
+            if (name == null || name.trim().isEmpty()) {
+                name = getPropValue(fileProps, "DB_NAME", "db.name");
+            }
+            if (user == null || user.trim().isEmpty()) {
+                user = getPropValue(fileProps, "DB_USER", "db.user", "DB_USERNAME", "db.username");
+            }
+            if (pass == null || pass.trim().isEmpty()) {
+                pass = getPropValue(fileProps, "DB_PASSWORD", "db.password");
+            }
+
+            if (host != null && !host.trim().isEmpty() && name != null && !name.trim().isEmpty()) {
+                System.out.println("[PRAGMATRIX-DB] Configuration Source : PROPERTIES FILE (host/name format)");
+                System.out.println("[PRAGMATRIX-DB] DB_HOST              : " + host.trim());
+                System.out.println("[PRAGMATRIX-DB] DB_PORT              : " + (port != null && !port.trim().isEmpty() ? port.trim() : "3306 (default)"));
+                System.out.println("[PRAGMATRIX-DB] DB_NAME              : " + name.trim());
+                System.out.println("[PRAGMATRIX-DB] DB_USER              : " + (user != null ? user.trim() : "[NOT SET]"));
+                System.out.println("[PRAGMATRIX-DB] DB_PASSWORD          : " + (pass != null && !pass.trim().isEmpty() ? "[SET (length " + pass.trim().length() + ")]" : "[NOT SET]"));
+            } else {
+                String dbUrl = fileProps != null ? fileProps.getProperty("db.url") : null;
+                if (dbUrl != null && !dbUrl.trim().isEmpty()) {
+                    System.out.println("[PRAGMATRIX-DB] Configuration Source : PROPERTIES FILE (db.url format)");
+                    System.out.println("[PRAGMATRIX-DB] JDBC URL             : " + dbUrl.trim());
+                    System.out.println("[PRAGMATRIX-DB] DB_USER              : " + (fileProps.getProperty("db.username") != null ? fileProps.getProperty("db.username").trim() : "[NOT SET]"));
+                } else {
+                    System.err.println("[PRAGMATRIX-DB] FATAL: No database configuration found!");
+                    throw new IllegalStateException("[PRAGMATRIX-DB] Database connection details not configured! Please set DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD environment variables in Render.");
+                }
+            }
         }
-        String envPass = getEnvOrProp("DB_PASSWORD", "db.password", fileProps);
+        System.out.println("================================================================================");
 
         HikariConfig config = new HikariConfig();
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");
 
-        if (envHost != null && !envHost.trim().isEmpty() && envName != null && !envName.trim().isEmpty()) {
-            // Cloud / Aiven Configuration with SSL Required
+        if (host != null && !host.trim().isEmpty() && name != null && !name.trim().isEmpty()) {
+            String resolvedPort = (port != null && !port.trim().isEmpty()) ? port.trim() : "3306";
             String jdbcUrl = String.format(
                     "jdbc:mysql://%s:%s/%s?useSSL=true&requireSSL=true&sslMode=REQUIRED&allowPublicKeyRetrieval=true&characterEncoding=UTF-8",
-                    envHost.trim(),
-                    envPort.trim(),
-                    envName.trim()
+                    host.trim(),
+                    resolvedPort,
+                    name.trim()
             );
             config.setJdbcUrl(jdbcUrl);
-            config.setUsername(envUser != null ? envUser.trim() : "");
-            config.setPassword(envPass != null ? envPass.trim() : "");
-            System.out.println("[PRAGMATRIX-DB] Using database configuration for host: " + envHost.trim() + " (SSL REQUIRED)");
-        } else {
-            // Fallback to legacy/local db.url from properties file
+            config.setUsername(user != null ? user.trim() : "");
+            config.setPassword(pass != null ? pass.trim() : "");
+        } else if (fileProps != null) {
             String dbUrl = fileProps.getProperty("db.url");
-            String dbUser = fileProps.getProperty("db.username");
-            String dbPass = fileProps.getProperty("db.password");
-
-            if (dbUrl != null && !dbUrl.trim().isEmpty()) {
-                config.setJdbcUrl(dbUrl.trim());
-                config.setUsername(dbUser != null ? dbUser.trim() : "");
-                config.setPassword(dbPass != null ? dbPass.trim() : "");
-                System.out.println("[PRAGMATRIX-DB] Using fallback database URL from properties file.");
-            } else {
-                throw new IllegalStateException("[PRAGMATRIX-DB] Database connection details not configured! Please set DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD environment variables or configure db.local.properties.");
-            }
+            String dbUser = fileProps.getProperty("db.username", user != null ? user : "");
+            String dbPass = fileProps.getProperty("db.password", pass != null ? pass : "");
+            config.setJdbcUrl(dbUrl != null ? dbUrl.trim() : "");
+            config.setUsername(dbUser != null ? dbUser.trim() : "");
+            config.setPassword(dbPass != null ? dbPass.trim() : "");
         }
 
         // Pool Sizing and Timeouts
-        int maxPool = parsePositiveInt(getEnvOrProp("DB_POOL_MAX_SIZE", "db.pool.maxSize", fileProps), DEFAULT_MAX_POOL_SIZE);
-        int minIdle = parsePositiveInt(getEnvOrProp("DB_POOL_MIN_IDLE", "db.pool.minIdle", fileProps), DEFAULT_MIN_IDLE);
-        long connTimeout = parsePositiveLong(getEnvOrProp("DB_POOL_TIMEOUT", "db.pool.connectionTimeout", fileProps), DEFAULT_CONNECTION_TIMEOUT);
-        long idleTimeout = parsePositiveLong(getEnvOrProp("DB_POOL_IDLE_TIMEOUT", "db.pool.idleTimeout", fileProps), DEFAULT_IDLE_TIMEOUT);
-        long maxLifetime = parsePositiveLong(getEnvOrProp("DB_POOL_MAX_LIFETIME", "db.pool.maxLifetime", fileProps), DEFAULT_MAX_LIFETIME);
+        int maxPool = parsePositiveInt(getFromEnvOrSystemOrProps("DB_POOL_MAX_SIZE", "db.pool.maxSize", fileProps), DEFAULT_MAX_POOL_SIZE);
+        int minIdle = parsePositiveInt(getFromEnvOrSystemOrProps("DB_POOL_MIN_IDLE", "db.pool.minIdle", fileProps), DEFAULT_MIN_IDLE);
+        long connTimeout = parsePositiveLong(getFromEnvOrSystemOrProps("DB_POOL_TIMEOUT", "db.pool.connectionTimeout", fileProps), DEFAULT_CONNECTION_TIMEOUT);
+        long idleTimeout = parsePositiveLong(getFromEnvOrSystemOrProps("DB_POOL_IDLE_TIMEOUT", "db.pool.idleTimeout", fileProps), DEFAULT_IDLE_TIMEOUT);
+        long maxLifetime = parsePositiveLong(getFromEnvOrSystemOrProps("DB_POOL_MAX_LIFETIME", "db.pool.maxLifetime", fileProps), DEFAULT_MAX_LIFETIME);
 
         config.setMaximumPoolSize(maxPool);
         config.setMinimumIdle(Math.min(minIdle, maxPool));
@@ -163,25 +212,48 @@ public class DBConnection {
         return props;
     }
 
-    private static String getEnvOrProp(String envKey, String propKey, Properties props) {
-        return getEnvOrProp(envKey, propKey, props, null);
+    private static String getFromEnvOrSystem(String... keys) {
+        if (keys == null) return null;
+        // 1. Try OS Environment Variables first (System.getenv)
+        for (String key : keys) {
+            String val = System.getenv(key);
+            if (val != null && !val.trim().isEmpty()) {
+                return val.trim();
+            }
+        }
+        // 2. Try JVM System Properties (-Dkey=...)
+        for (String key : keys) {
+            String val = System.getProperty(key);
+            if (val != null && !val.trim().isEmpty()) {
+                return val.trim();
+            }
+        }
+        return null;
     }
 
-    private static String getEnvOrProp(String envKey, String propKey, Properties props, String defaultValue) {
-        String envVal = System.getenv(envKey);
-        if (envVal != null && !envVal.trim().isEmpty()) {
-            return envVal.trim();
+    private static String getPropValue(Properties props, String... keys) {
+        if (props == null || keys == null) return null;
+        for (String key : keys) {
+            String val = props.getProperty(key);
+            if (val != null && !val.trim().isEmpty()) {
+                return val.trim();
+            }
+        }
+        return null;
+    }
+
+    private static String getFromEnvOrSystemOrProps(String envKey, String propKey, Properties props) {
+        String val = getFromEnvOrSystem(envKey, propKey);
+        if (val != null && !val.trim().isEmpty()) {
+            return val;
         }
         if (props != null) {
-            String propVal = props.getProperty(envKey);
-            if (propVal == null || propVal.trim().isEmpty()) {
-                propVal = props.getProperty(propKey);
-            }
-            if (propVal != null && !propVal.trim().isEmpty()) {
-                return propVal.trim();
+            val = getPropValue(props, envKey, propKey);
+            if (val != null && !val.trim().isEmpty()) {
+                return val;
             }
         }
-        return defaultValue;
+        return null;
     }
 
     private static int parsePositiveInt(String val, int defaultVal) {
@@ -218,12 +290,20 @@ public class DBConnection {
      * Close the connection pool on application shutdown.
      */
     public static void close() {
-        synchronized (LOCK) {
-            if (dataSource != null && !dataSource.isClosed()) {
-                dataSource.close();
-                dataSource = null;
-                System.out.println("[PRAGMATRIX-DB] HikariCP Connection Pool closed.");
+        if (dataSource != null && !dataSource.isClosed()) {
+            synchronized (LOCK) {
+                if (dataSource != null && !dataSource.isClosed()) {
+                    dataSource.close();
+                    System.out.println("[PRAGMATRIX-DB] HikariCP Connection Pool closed.");
+                }
             }
         }
+    }
+
+    /**
+     * Diagnostic helper to check connection pool status.
+     */
+    public static boolean isPoolActive() {
+        return dataSource != null && !dataSource.isClosed() && dataSource.isRunning();
     }
 }
