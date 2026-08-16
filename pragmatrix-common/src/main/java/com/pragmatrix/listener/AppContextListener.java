@@ -38,6 +38,13 @@ public class AppContextListener implements ServletContextListener {
             System.err.println("[PRAGMATRIX] Warning: Could not seed admin accounts: " + e.getMessage());
             e.printStackTrace();
         }
+
+        // Verify/create leaderboard view if supported by database permissions
+        try {
+            ensureLeaderboardView();
+        } catch (Exception e) {
+            System.err.println("[PRAGMATRIX] Note: Leaderboard view check: " + e.getMessage());
+        }
     }
 
     @Override
@@ -100,6 +107,27 @@ public class AppContextListener implements ServletContextListener {
         } else if (!PasswordUtil.checkPassword(DEFAULT_PASSWORD, existing.getPasswordHash())) {
             dao.updatePassword(existing.getAdminId(), hash);
             System.out.println("[PRAGMATRIX] Updated password hash for admin: " + username);
+        }
+    }
+
+    /**
+     * Creates or replaces the computed leaderboard view in the database if possible.
+     */
+    private void ensureLeaderboardView() {
+        String sql = "CREATE OR REPLACE VIEW leaderboard AS "
+                   + "SELECT t.unique_id, t.college_name, t.team_lead_name, t.quiz_code, "
+                   + "COALESCE(SUM(CASE WHEN r.is_finished = TRUE THEN s.points ELSE 0 END), 0) AS total_points "
+                   + "FROM teams t "
+                   + "LEFT JOIN scores s ON t.unique_id = s.unique_id "
+                   + "LEFT JOIN rounds r ON s.round_id = r.round_id "
+                   + "GROUP BY t.unique_id, t.college_name, t.team_lead_name, t.quiz_code "
+                   + "ORDER BY total_points DESC";
+        try (java.sql.Connection conn = DBConnection.getConnection();
+             java.sql.Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(sql);
+            System.out.println("[PRAGMATRIX] Leaderboard view verified/created.");
+        } catch (Exception e) {
+            System.err.println("[PRAGMATRIX] Note: Could not create leaderboard view (using direct queries): " + e.getMessage());
         }
     }
 }

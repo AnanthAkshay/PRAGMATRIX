@@ -117,14 +117,20 @@ public class ScoreDAO {
      * Only includes points from finished rounds in the total.
      */
     public List<LeaderboardEntry> getLeaderboard(String quizCode) throws SQLException {
-        // First, get all teams with their total points from the leaderboard view
+        // First, get all teams with their total points directly from teams, scores, and finished rounds
         // Then separately get per-round scores for breakdown display
 
         Map<String, LeaderboardEntry> entryMap = new LinkedHashMap<>();
 
-        // Query 1: Get leaderboard totals
-        String sql1 = "SELECT unique_id, college_name, team_lead_name, quiz_code, total_points "
-                     + "FROM leaderboard WHERE quiz_code = ? ORDER BY total_points DESC";
+        // Query 1: Get leaderboard totals directly
+        String sql1 = "SELECT t.unique_id, t.college_name, t.team_lead_name, t.quiz_code, "
+                    + "COALESCE(SUM(CASE WHEN r.is_finished = TRUE THEN s.points ELSE 0 END), 0) AS total_points "
+                    + "FROM teams t "
+                    + "LEFT JOIN scores s ON t.unique_id = s.unique_id "
+                    + "LEFT JOIN rounds r ON s.round_id = r.round_id "
+                    + "WHERE t.quiz_code = ? "
+                    + "GROUP BY t.unique_id, t.college_name, t.team_lead_name, t.quiz_code "
+                    + "ORDER BY total_points DESC, t.unique_id ASC";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql1)) {
             ps.setString(1, quizCode);
