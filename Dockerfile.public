@@ -27,6 +27,9 @@ WORKDIR /usr/local/tomcat
 # Remove default sample webapps to optimize memory and startup time
 RUN rm -rf webapps/*
 
+# Disable Tomcat shutdown port (8005) so Render port scanner only targets the HTTP port
+RUN sed -i 's/<Server port="8005"/<Server port="-1"/' conf/server.xml
+
 # Deploy the public webapp as ROOT.war to serve from the root URL path (/)
 COPY --from=builder /build/pragmatrix-public/target/pragmatrix2026.war webapps/ROOT.war
 

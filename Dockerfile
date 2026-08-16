@@ -1,8 +1,5 @@
 # ============================================================
 # PRAGMATRIX 2026 — Multi-Module Dockerfile (Public App Default)
-# For specific app builds, use:
-#   docker build -f Dockerfile.public -t pragmatrix-public .
-#   docker build -f Dockerfile.admin -t pragmatrix-admin .
 # ============================================================
 
 # --- Stage 1: Build Module Artifacts ---
@@ -25,6 +22,9 @@ FROM tomcat:10.1-jdk17-temurin
 WORKDIR /usr/local/tomcat
 
 RUN rm -rf webapps/*
+
+# Disable Tomcat shutdown port (8005)
+RUN sed -i 's/<Server port="8005"/<Server port="-1"/' conf/server.xml
 
 COPY --from=builder /build/pragmatrix-public/target/pragmatrix2026.war webapps/ROOT.war
 
