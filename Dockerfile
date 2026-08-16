@@ -23,8 +23,8 @@ WORKDIR /usr/local/tomcat
 
 RUN rm -rf webapps/*
 
-# Disable Tomcat shutdown port (8005)
-RUN sed -i 's/<Server port="8005"/<Server port="-1"/' conf/server.xml
+# Disable Tomcat socket shutdown listener (port 8005 -> -1) so container uses SIGTERM only
+RUN sed -i 's/port="8005"/port="-1"/g' conf/server.xml
 
 COPY --from=builder /build/pragmatrix-public/target/pragmatrix2026.war webapps/ROOT.war
 
@@ -32,4 +32,4 @@ ENV JAVA_OPTS="-Xms128m -Xmx320m -XX:+UseG1GC -Djava.security.egd=file:/dev/./ur
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "sed -i \"s/port=\\\"8080\\\"/port=\\\"${PORT:-8080}\\\"/g\" conf/server.xml && exec catalina.sh run"]
+CMD ["sh", "-c", "sed -i 's/port=\"8005\"/port=\"-1\"/g' conf/server.xml && sed -i \"s/port=\\\"8080\\\"/port=\\\"${PORT:-8080}\\\"/g\" conf/server.xml && exec catalina.sh run"]

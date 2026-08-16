@@ -8,11 +8,16 @@ import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Enumeration;
+
 /**
  * Application lifecycle listener.
  * Initialises the HikariCP connection pool on startup and seeds
  * default admin accounts if they don't exist.
- * Closes the pool on shutdown.
+ * Closes the pool, deregisters JDBC drivers, and stops MySQL cleanup threads on shutdown.
  */
 @WebListener
 public class AppContextListener implements ServletContextListener {
@@ -37,9 +42,39 @@ public class AppContextListener implements ServletContextListener {
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
+        // Step 1: Shut down HikariCP connection pool first
         System.out.println("[PRAGMATRIX] Shutting down connection pool...");
-        DBConnection.close();
-        System.out.println("[PRAGMATRIX] Connection pool closed.");
+        try {
+            DBConnection.close();
+            System.out.println("[PRAGMATRIX] Connection pool closed.");
+        } catch (Throwable t) {
+            System.err.println("[PRAGMATRIX] Error closing connection pool: " + t.getMessage());
+        }
+
+        // Step 2: Deregister JDBC drivers registered by this webapp ClassLoader
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        Enumeration<Driver> drivers = DriverManager.getDrivers();
+        while (drivers.hasMoreElements()) {
+            Driver driver = drivers.nextElement();
+            if (driver.getClass().getClassLoader() == cl) {
+                try {
+                    DriverManager.deregisterDriver(driver);
+                    System.out.println("[PRAGMATRIX] Deregistered JDBC driver: " + driver);
+                } catch (SQLException e) {
+                    System.err.println("[PRAGMATRIX] Error deregistering JDBC driver " + driver + ": " + e.getMessage());
+                } catch (Throwable t) {
+                    System.err.println("[PRAGMATRIX] Unexpected error deregistering JDBC driver " + driver + ": " + t.getMessage());
+                }
+            }
+        }
+
+        // Step 3: Shut down MySQL AbandonedConnectionCleanupThread
+        try {
+            com.mysql.cj.jdbc.AbandonedConnectionCleanupThread.checkedShutdown();
+            System.out.println("[PRAGMATRIX] MySQL AbandonedConnectionCleanupThread successfully stopped.");
+        } catch (Throwable t) {
+            System.err.println("[PRAGMATRIX] Warning: Could not shutdown MySQL AbandonedConnectionCleanupThread: " + t.getMessage());
+        }
     }
 
     /**

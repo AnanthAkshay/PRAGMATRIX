@@ -27,8 +27,8 @@ WORKDIR /usr/local/tomcat
 # Remove default sample webapps to optimize memory and startup time
 RUN rm -rf webapps/*
 
-# Disable Tomcat shutdown port (8005) so Render port scanner only targets the HTTP port
-RUN sed -i 's/<Server port="8005"/<Server port="-1"/' conf/server.xml
+# Disable Tomcat socket shutdown listener (port 8005 -> -1) so container uses SIGTERM only
+RUN sed -i 's/port="8005"/port="-1"/g' conf/server.xml
 
 # Deploy the public webapp as ROOT.war to serve from the root URL path (/)
 COPY --from=builder /build/pragmatrix-public/target/pragmatrix2026.war webapps/ROOT.war
@@ -39,5 +39,5 @@ ENV JAVA_OPTS="-Xms128m -Xmx320m -XX:+UseG1GC -Djava.security.egd=file:/dev/./ur
 # Expose default port
 EXPOSE 8080
 
-# Dynamically bind Tomcat Connector to Render's $PORT (defaults to 8080 if PORT is unset)
-CMD ["sh", "-c", "sed -i \"s/port=\\\"8080\\\"/port=\\\"${PORT:-8080}\\\"/g\" conf/server.xml && exec catalina.sh run"]
+# Ensure shutdown port is disabled (-1), bind HTTP Connector to Render's $PORT, then start Tomcat
+CMD ["sh", "-c", "sed -i 's/port=\"8005\"/port=\"-1\"/g' conf/server.xml && sed -i \"s/port=\\\"8080\\\"/port=\\\"${PORT:-8080}\\\"/g\" conf/server.xml && exec catalina.sh run"]
