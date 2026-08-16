@@ -186,7 +186,7 @@
                                         </td>
                                         <td style="text-align: center;"><strong style="color: var(--gold-700);">${crit.maxMarks}</strong></td>
                                         <td style="text-align: center;">
-                                            <form action="${pageContext.request.contextPath}/admin/manage-criteria" method="POST" style="display:inline;" onsubmit="return confirm('Delete criterion &quot;${crit.criterionName}&quot;?')">
+                                            <form action="${pageContext.request.contextPath}/admin/manage-criteria" method="POST" style="display:inline;" class="delete-crit-form">
                                                 <input type="hidden" name="action" value="deleteCriterion">
                                                 <input type="hidden" name="roundId" value="${currentRound.roundId}">
                                                 <input type="hidden" name="criterionId" value="${crit.criterionId}">
@@ -233,6 +233,15 @@
         var el = document.getElementById('add-crit-form-' + compId);
         if (el) el.style.display = (el.style.display === 'none') ? 'block' : 'none';
     }
+
+    // Confirm before deleting criterion
+    document.querySelectorAll('.delete-crit-form').forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            if (!confirm('Are you sure you want to delete this criterion?')) {
+                e.preventDefault();
+            }
+        });
+    });
     </script>
 </body>
 </html>
