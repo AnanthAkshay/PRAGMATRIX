@@ -172,6 +172,19 @@
                     </c:forEach>
 
                 </c:when>
+                <c:when test="${round.quizCode == 'VORTEX'}">
+                    <div class="glass-panel text-center" style="padding: 3rem;">
+                        <h3 style="color: var(--gray-600);">No Judging Criteria Configured</h3>
+                        <p style="color: var(--gray-500); margin-bottom: 1.5rem;">
+                            Judging criteria and components have not been set up for this VORTEX round yet.
+                        </p>
+                        <c:if test="${not empty vortexRound}">
+                            <a href="${pageContext.request.contextPath}/admin/manage-criteria?roundId=${vortexRound.roundId}" class="btn btn-primary">
+                                Set Up Criteria for <c:out value="${round.roundName}"/>
+                            </a>
+                        </c:if>
+                    </div>
+                </c:when>
                 <c:otherwise>
 
                     <!-- BIZWIZX Simple Score Entry View -->
@@ -225,8 +238,8 @@
                 </c:otherwise>
             </c:choose>
 
-            <c:if test="${!round.finished && not empty teams}">
-                <div class="d-flex justify-end gap-sm style-sticky" style="margin-top: 1.5rem;">
+            <c:if test="${!round.finished && not empty teams && (round.quizCode != 'VORTEX' || (not empty vortexRound && not empty vortexRound.components))}">
+                <div class="d-flex justify-end gap-sm" style="margin-top: 1.5rem;">
                     <a href="${pageContext.request.contextPath}/admin/dashboard?quiz=${round.quizCode}" class="btn btn-outline btn-lg">Cancel</a>
                     <button type="submit" class="btn btn-primary btn-lg" id="btn-save-scores">
                         Save Scores

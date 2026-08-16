@@ -121,7 +121,7 @@
                             <button type="button" class="btn btn-outline btn-sm" onclick="toggleAddCrit(${comp.componentId})">
                                 + Add Criterion
                             </button>
-                            <form action="${pageContext.request.contextPath}/admin/manage-criteria" method="POST" style="display:inline;" onsubmit="return confirm('Delete this component and all its criteria?')">
+                            <form action="${pageContext.request.contextPath}/admin/manage-criteria" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this component and all its criteria?');">
                                 <input type="hidden" name="action" value="deleteComponent">
                                 <input type="hidden" name="roundId" value="${currentRound.roundId}">
                                 <input type="hidden" name="componentId" value="${comp.componentId}">
@@ -186,7 +186,7 @@
                                         </td>
                                         <td style="text-align: center;"><strong style="color: var(--gold-700);">${crit.maxMarks}</strong></td>
                                         <td style="text-align: center;">
-                                            <form action="${pageContext.request.contextPath}/admin/manage-criteria" method="POST" style="display:inline;" onsubmit="return confirm('Delete criterion &quot;${crit.criterionName}&quot;?')">
+                                            <form action="${pageContext.request.contextPath}/admin/manage-criteria" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this criterion?');">
                                                 <input type="hidden" name="action" value="deleteCriterion">
                                                 <input type="hidden" name="roundId" value="${currentRound.roundId}">
                                                 <input type="hidden" name="criterionId" value="${crit.criterionId}">

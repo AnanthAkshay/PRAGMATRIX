@@ -40,12 +40,14 @@ public class FinishRoundServlet extends HttpServlet {
                 return;
             }
 
+            String quiz = (quizCode != null && !quizCode.isEmpty()) ? quizCode : round.getQuizCode();
+
             if ("reopen".equals(action)) {
                 roundDAO.reopenRound(roundId);
-                resp.sendRedirect(req.getContextPath() + "/admin/dashboard?quiz=" + quizCode + "&success=Round reopened");
+                resp.sendRedirect(req.getContextPath() + "/admin/dashboard?quiz=" + quiz + "&success=Round+reopened");
             } else {
                 roundDAO.finishRound(roundId);
-                resp.sendRedirect(req.getContextPath() + "/admin/dashboard?quiz=" + quizCode + "&success=Round finished");
+                resp.sendRedirect(req.getContextPath() + "/admin/dashboard?quiz=" + quiz + "&success=Round+finished");
             }
 
         } catch (Exception e) {

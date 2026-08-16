@@ -65,7 +65,7 @@ public class AdminLoginServlet extends HttpServlet {
 
         // 1. Strict 2-email restriction check
         if (!AUTHORIZED_ADMIN_EMAILS.contains(email)) {
-            req.setAttribute("error", "This email is not authorized for admin access.");
+            req.setAttribute("error", "Unable to process this request.");
             req.setAttribute("email", emailInput);
             req.getRequestDispatcher("/admin-login.jsp").forward(req, resp);
             return;

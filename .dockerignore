@@ -1,0 +1,23 @@
+# Build artifacts
+**/target/
+target/
+
+# Version Control
+.git/
+.gitignore
+
+# Environment & Local Secrets
+**/db.local.properties
+db.local.properties
+*.local.properties
+**/email.properties
+
+# IDE & Editor metadata
+.idea/
+.vscode/
+*.iml
+*.log
+
+# Docker metadata
+.dockerignore
+Dockerfile*

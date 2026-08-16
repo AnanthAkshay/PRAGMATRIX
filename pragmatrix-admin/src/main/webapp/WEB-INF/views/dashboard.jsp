@@ -245,7 +245,7 @@
 
                             <c:choose>
                                 <c:when test="${!round.finished}">
-                                    <form action="${pageContext.request.contextPath}/admin/finish-round" method="POST" style="display:inline;" onsubmit="return confirmFinish('${round.roundName}')">
+                                    <form action="${pageContext.request.contextPath}/admin/finish-round" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to finish this round? This will lock score editing.');">
                                         <input type="hidden" name="roundId" value="${round.roundId}">
                                         <input type="hidden" name="quizCode" value="${selectedQuiz}">
                                         <input type="hidden" name="action" value="finish">

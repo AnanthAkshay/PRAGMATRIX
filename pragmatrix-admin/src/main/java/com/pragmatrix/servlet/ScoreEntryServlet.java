@@ -127,19 +127,31 @@ public class ScoreEntryServlet extends HttpServlet {
                             for (JudgingCriterion crit : comp.getCriteria()) {
                                 String valStr = req.getParameter("score_" + team.getUniqueId() + "_" + crit.getCriterionId());
                                 if (valStr != null && !valStr.trim().isEmpty()) {
-                                    double scoreVal = Double.parseDouble(valStr.trim());
-                                    if (scoreVal < 0 || scoreVal > crit.getMaxMarks()) {
-                                        resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=Score+for+" + team.getUniqueId() + "+exceeds+max+marks+of+" + crit.getMaxMarks());
+                                    try {
+                                        double scoreVal = Double.parseDouble(valStr.trim());
+                                        if (scoreVal < 0 || scoreVal > crit.getMaxMarks()) {
+                                            resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=Score+for+" + team.getUniqueId() + "+exceeds+max+marks+of+" + crit.getMaxMarks());
+                                            return;
+                                        }
+                                        critScores.put(crit.getCriterionId(), scoreVal);
+                                    } catch (NumberFormatException nfe) {
+                                        resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=Invalid+numeric+score+entered+for+" + team.getUniqueId());
                                         return;
                                     }
-                                    critScores.put(crit.getCriterionId(), scoreVal);
                                 }
                             }
                         }
                         if (!critScores.isEmpty()) {
-                            vortexDAO.saveTeamScores(team.getUniqueId(), vortexRound.getRoundId(), roundId, critScores, adminName);
+                            boolean saved = vortexDAO.saveTeamScores(team.getUniqueId(), vortexRound.getRoundId(), roundId, critScores, adminName);
+                            if (!saved) {
+                                resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=Database+error+saving+scores+for+" + team.getUniqueId());
+                                return;
+                            }
                         }
                     }
+                } else {
+                    resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=No+judging+criteria+configured+for+this+round.+Please+manage+criteria+first.");
+                    return;
                 }
             } else {
                 // BIZWIZX Simple Score Entry
@@ -147,9 +159,14 @@ public class ScoreEntryServlet extends HttpServlet {
                 for (Team team : teams) {
                     String pointsStr = req.getParameter("score_" + team.getUniqueId());
                     if (pointsStr != null && !pointsStr.trim().isEmpty()) {
-                        double points = Double.parseDouble(pointsStr.trim());
-                        if (points >= 0) {
-                            scores.add(new Score(team.getUniqueId(), roundId, points, adminId));
+                        try {
+                            double points = Double.parseDouble(pointsStr.trim());
+                            if (points >= 0) {
+                                scores.add(new Score(team.getUniqueId(), roundId, points, adminId));
+                            }
+                        } catch (NumberFormatException nfe) {
+                            resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=Invalid+numeric+score+entered+for+" + team.getUniqueId());
+                            return;
                         }
                     }
                 }
@@ -162,7 +179,12 @@ public class ScoreEntryServlet extends HttpServlet {
 
         } catch (Exception e) {
             e.printStackTrace();
-            resp.sendRedirect(req.getContextPath() + "/admin/dashboard?error=Failed+to+save+scores");
+            String roundIdParam = req.getParameter("roundId");
+            if (roundIdParam != null && !roundIdParam.trim().isEmpty()) {
+                resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundIdParam.trim() + "&error=Failed+to+save+scores");
+            } else {
+                resp.sendRedirect(req.getContextPath() + "/admin/dashboard?error=Failed+to+save+scores");
+            }
         }
     }
 }

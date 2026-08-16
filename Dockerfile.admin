@@ -1,35 +1,40 @@
 # ============================================================
-# PRAGMATRIX 2026 — Multi-Module Dockerfile (Public App Default)
-# For specific app builds, use:
-#   docker build -f Dockerfile.public -t pragmatrix-public .
-#   docker build -f Dockerfile.admin -t pragmatrix-admin .
+# PRAGMATRIX 2026 — Admin Dashboard Portal Dockerfile (Render)
 # ============================================================
 
 # --- Stage 1: Build Module Artifacts ---
 FROM maven:3.9.6-eclipse-temurin-17 AS builder
 WORKDIR /build
 
+# Copy POM definitions for dependency resolution and layer caching
 COPY pom.xml .
 COPY pragmatrix-common/pom.xml pragmatrix-common/
 COPY pragmatrix-public/pom.xml pragmatrix-public/
 COPY pragmatrix-admin/pom.xml pragmatrix-admin/
 
+# Copy module source trees
 COPY pragmatrix-common/src pragmatrix-common/src
 COPY pragmatrix-public/src pragmatrix-public/src
 COPY pragmatrix-admin/src pragmatrix-admin/src
 
-RUN mvn clean package -DskipTests
+# Package common and admin modules
+RUN mvn clean package -DskipTests -pl pragmatrix-common,pragmatrix-admin -am
 
-# --- Stage 2: Runtime Container ---
+# --- Stage 2: Runtime Container (Tomcat 10.1 / Jakarta EE 10 / Java 17) ---
 FROM tomcat:10.1-jdk17-temurin
 WORKDIR /usr/local/tomcat
 
+# Remove default sample webapps to optimize memory and startup time
 RUN rm -rf webapps/*
 
-COPY --from=builder /build/pragmatrix-public/target/pragmatrix2026.war webapps/ROOT.war
+# Deploy the admin webapp as ROOT.war to serve from the root URL path (/)
+COPY --from=builder /build/pragmatrix-admin/target/pragmatrix-admin.war webapps/ROOT.war
 
+# Optimized JVM memory settings for containerized environments (Render Free/Starter tier)
 ENV JAVA_OPTS="-Xms128m -Xmx320m -XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom"
 
+# Expose default port
 EXPOSE 8080
 
+# Dynamically bind Tomcat Connector to Render's $PORT (defaults to 8080 if PORT is unset)
 CMD ["sh", "-c", "sed -i \"s/port=\\\"8080\\\"/port=\\\"${PORT:-8080}\\\"/g\" conf/server.xml && exec catalina.sh run"]

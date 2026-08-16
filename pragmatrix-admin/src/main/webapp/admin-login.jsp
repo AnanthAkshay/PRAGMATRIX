@@ -20,9 +20,8 @@
     <div class="centered-form-wrapper">
         <div class="centered-form-card glass-panel">
             <div class="form-card-header">
-                <img src="${pageContext.request.contextPath}/images/pragmatrix-crest.png" alt="PRAGMATRIX 2026" class="form-logo" style="height: 90px; width: auto;">
                 <h2>Admin Portal</h2>
-                <p>Enter your authorized email to receive a 6-digit OTP</p>
+                <p>Enter your email address to receive a login OTP</p>
             </div>
 
             <!-- Error alert -->
@@ -35,9 +34,9 @@
 
             <form action="${pageContext.request.contextPath}/login" method="POST" id="login-form" novalidate>
                 <div class="form-group">
-                    <label for="email" class="form-label">Authorized Admin Email <span class="required">*</span></label>
+                    <label for="email" class="form-label">Email Address <span class="required">*</span></label>
                     <input type="email" name="email" id="email" class="form-control"
-                           placeholder="svs262003@gmail.com or ananthakshay2006@gmail.com"
+                           placeholder="Enter your email"
                            value="<c:out value='${email}'/>"
                            required autocomplete="email">
                 </div>

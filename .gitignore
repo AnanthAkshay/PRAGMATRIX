@@ -1,2 +1,5 @@
 **/target/
 **/email.properties
+**/db.local.properties
+db.local.properties
+*.local.properties

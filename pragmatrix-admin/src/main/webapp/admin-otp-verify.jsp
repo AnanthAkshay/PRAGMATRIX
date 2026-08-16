@@ -20,7 +20,6 @@
     <div class="centered-form-wrapper">
         <div class="centered-form-card glass-panel">
             <div class="form-card-header">
-                <img src="${pageContext.request.contextPath}/images/pragmatrix-crest.png" alt="PRAGMATRIX 2026" class="form-logo" style="height: 90px; width: auto;">
                 <h2>Verify Admin OTP</h2>
                 <p>An OTP has been sent to <strong><c:out value="${sessionScope.admin_pending_email}"/></strong></p>
             </div>

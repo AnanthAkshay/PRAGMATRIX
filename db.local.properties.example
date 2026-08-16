@@ -1,0 +1,24 @@
+# ============================================================
+# PRAGMATRIX 2026 — Local Database Configuration (Example)
+# Copy this file to `db.local.properties` for local development
+# or set the corresponding environment variables in production.
+# ============================================================
+
+# --- Option 1: Individual Cloud/Aiven or Local DB Keys ---
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=pragmatrix2026
+DB_USER=root
+DB_PASSWORD=your_local_password
+
+# --- Option 2: Full JDBC URL (Local testing fallback) ---
+# db.url=jdbc:mysql://localhost:3306/pragmatrix2026?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
+# db.username=root
+# db.password=your_local_password
+
+# --- Connection Pool Tuning (Conservative defaults for Aiven/Cloud) ---
+DB_POOL_MAX_SIZE=10
+DB_POOL_MIN_IDLE=2
+DB_POOL_TIMEOUT=30000
+DB_POOL_IDLE_TIMEOUT=600000
+DB_POOL_MAX_LIFETIME=1800000
