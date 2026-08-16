@@ -24,8 +24,8 @@ import java.util.Properties;
  */
 public class DBConnection {
 
-    private static final int DEFAULT_MAX_POOL_SIZE = 10;
-    private static final int DEFAULT_MIN_IDLE = 2;
+    private static final int DEFAULT_MAX_POOL_SIZE = 5;
+    private static final int DEFAULT_MIN_IDLE = 1;
     private static final long DEFAULT_CONNECTION_TIMEOUT = 30000; // 30s
     private static final long DEFAULT_IDLE_TIMEOUT = 600000;      // 10 min
     private static final long DEFAULT_MAX_LIFETIME = 1800000;     // 30 min

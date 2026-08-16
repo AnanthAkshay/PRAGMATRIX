@@ -32,6 +32,14 @@
                 </div>
             </c:if>
 
+            <!-- Email Delivery Warning Alert -->
+            <c:if test="${emailWarning}">
+                <div class="alert alert-error" id="email-warning-alert" style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.5); color: #fde68a;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>We weren't able to send the OTP email. Please check server logs or contact support.</span>
+                </div>
+            </c:if>
+
             <!-- Error alert -->
             <c:if test="${not empty error}">
                 <div class="alert alert-error" id="error-alert">

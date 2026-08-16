@@ -73,9 +73,11 @@ public class AdminOtpVerifyServlet extends HttpServlet {
             boolean sent = EmailService.sendAdminOtpEmail(pendingEmail, newOtp);
             if (!sent) {
                 System.err.println("[ADMIN-OTP] Warning: Resend email failed via SMTP. Generated OTP: " + newOtp);
+                req.setAttribute("emailWarning", true);
+            } else {
+                req.setAttribute("message", "A new OTP has been sent to " + pendingEmail + ". It will expire in 5 minutes.");
             }
 
-            req.setAttribute("message", "A new OTP has been sent to " + pendingEmail + ". It will expire in 5 minutes.");
             req.getRequestDispatcher("/admin-otp-verify.jsp").forward(req, resp);
             return;
         }

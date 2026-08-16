@@ -97,9 +97,11 @@ public class AdminLoginServlet extends HttpServlet {
         boolean sent = EmailService.sendAdminOtpEmail(email, otpCode);
         if (!sent) {
             System.err.println("[ADMIN-LOGIN] Warning: Email failed to send via SMTP. Generated OTP: " + otpCode);
+            req.setAttribute("emailWarning", true);
+        } else {
+            req.setAttribute("message", "A 6-digit OTP has been sent to " + email + ". It will expire in 5 minutes.");
         }
 
-        req.setAttribute("message", "A 6-digit OTP has been sent to " + email + ". It will expire in 5 minutes.");
         req.getRequestDispatcher("/admin-otp-verify.jsp").forward(req, resp);
     }
 

@@ -10,8 +10,12 @@ import java.util.Properties;
 /**
  * Utility for sending emails via SMTP (Jakarta Mail / Angus Mail).
  * <p>
- * Configuration is loaded from {@code email.properties} on the classpath,
- * with fallback to environment variables (e.g. SMTP_USERNAME, SMTP_PASSWORD).
+ * Configuration precedence:
+ * <ol>
+ *   <li><b>OS Environment Variables (System.getenv)</b>: SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM_EMAIL, SMTP_FROM_NAME</li>
+ *   <li><b>JVM System Properties (System.getProperty)</b>: -DSMTP_HOST=... or -Demail.smtp.host=...</li>
+ *   <li><b>Classpath Properties file</b>: {@code email.properties}</li>
+ * </ol>
  * All send operations are wrapped in try/catch — failures are logged
  * server-side and never break calling code.
  * </p>
@@ -19,39 +23,136 @@ import java.util.Properties;
 public class EmailService {
 
     private static Properties emailProps;
-    private static boolean initialized = false;
+    private static volatile boolean initialized = false;
+    private static final Object LOCK = new Object();
+
+    private static String resolvedHost;
+    private static String resolvedPort;
+    private static String resolvedUsername;
+    private static String resolvedPassword;
+    private static String resolvedFromEmail;
+    private static String resolvedFromName;
 
     private EmailService() {} // utility class
 
     /**
-     * Lazily load email configuration from classpath.
+     * Lazily load email configuration prioritizing System.getenv() first.
      */
-    private static synchronized void loadConfig() {
-        if (initialized) return;
-        emailProps = new Properties();
-        try (InputStream is = EmailService.class.getClassLoader()
-                .getResourceAsStream("email.properties")) {
+    private static void loadConfig() {
+        if (!initialized) {
+            synchronized (LOCK) {
+                if (!initialized) {
+                    // Step 1: Probe Environment Variables (System.getenv) & JVM System Properties directly first
+                    String host = getFromEnvOrSystem("SMTP_HOST", "email.smtp.host", "MAIL_HOST");
+                    String port = getFromEnvOrSystem("SMTP_PORT", "email.smtp.port", "MAIL_PORT");
+                    String username = getFromEnvOrSystem("SMTP_USERNAME", "EMAIL_USERNAME", "email.smtp.username", "MAIL_USERNAME");
+                    String password = getFromEnvOrSystem("SMTP_PASSWORD", "EMAIL_PASSWORD", "email.smtp.password", "MAIL_PASSWORD");
+                    String fromEmail = getFromEnvOrSystem("SMTP_FROM_EMAIL", "EMAIL_FROM", "SMTP_FROM", "email.from.address");
+                    String fromName = getFromEnvOrSystem("SMTP_FROM_NAME", "EMAIL_FROM_NAME", "SMTP_NAME", "email.from.name");
+
+                    boolean usingEnvVars = (username != null && !username.trim().isEmpty() && password != null && !password.trim().isEmpty());
+
+                    System.out.println("================================================================================");
+                    System.out.println("[PRAGMATRIX-EMAIL] Initialising Email (SMTP) Configuration...");
+
+                    if (usingEnvVars) {
+                        System.out.println("[PRAGMATRIX-EMAIL] Configuration Source : ENVIRONMENT VARIABLES (System.getenv)");
+                        resolvedHost = (host != null && !host.trim().isEmpty()) ? host.trim() : "smtp.gmail.com";
+                        resolvedPort = (port != null && !port.trim().isEmpty()) ? port.trim() : "587";
+                        resolvedUsername = username.trim();
+                        resolvedPassword = password.trim();
+                        resolvedFromEmail = (fromEmail != null && !fromEmail.trim().isEmpty()) ? fromEmail.trim() : resolvedUsername;
+                        resolvedFromName = (fromName != null && !fromName.trim().isEmpty()) ? fromName.trim() : "PRAGMATRIX 2026";
+                    } else {
+                        System.out.println("[PRAGMATRIX-EMAIL] No SMTP credentials in environment variables. Checking email.properties...");
+                        emailProps = loadFallbackProperties();
+
+                        resolvedHost = getFromEnvOrSystemOrProps("SMTP_HOST", "email.smtp.host", emailProps, "smtp.gmail.com");
+                        resolvedPort = getFromEnvOrSystemOrProps("SMTP_PORT", "email.smtp.port", emailProps, "587");
+                        resolvedUsername = getFromEnvOrSystemOrProps("SMTP_USERNAME", "email.smtp.username", emailProps, "");
+                        if (resolvedUsername.isEmpty()) {
+                            resolvedUsername = getFromEnvOrSystemOrProps("EMAIL_USERNAME", "email.smtp.username", emailProps, "");
+                        }
+                        resolvedPassword = getFromEnvOrSystemOrProps("SMTP_PASSWORD", "email.smtp.password", emailProps, "");
+                        if (resolvedPassword.isEmpty()) {
+                            resolvedPassword = getFromEnvOrSystemOrProps("EMAIL_PASSWORD", "email.smtp.password", emailProps, "");
+                        }
+                        resolvedFromEmail = getFromEnvOrSystemOrProps("SMTP_FROM_EMAIL", "email.from.address", emailProps, resolvedUsername);
+                        if (resolvedFromEmail == null || resolvedFromEmail.isEmpty()) {
+                            resolvedFromEmail = getFromEnvOrSystemOrProps("EMAIL_FROM", "email.from.address", emailProps, resolvedUsername);
+                        }
+                        resolvedFromName = getFromEnvOrSystemOrProps("SMTP_FROM_NAME", "email.from.name", emailProps, "PRAGMATRIX 2026");
+                        if (resolvedFromName == null || resolvedFromName.isEmpty()) {
+                            resolvedFromName = getFromEnvOrSystemOrProps("EMAIL_FROM_NAME", "email.from.name", emailProps, "PRAGMATRIX 2026");
+                        }
+
+                        if (!resolvedUsername.isEmpty() && !resolvedPassword.isEmpty()) {
+                            System.out.println("[PRAGMATRIX-EMAIL] Configuration Source : PROPERTIES FILE (email.properties)");
+                        } else {
+                            System.out.println("[PRAGMATRIX-EMAIL] Configuration Source : NONE (SMTP credentials missing)");
+                        }
+                    }
+
+                    System.out.println("[PRAGMATRIX-EMAIL] SMTP_HOST            : " + resolvedHost);
+                    System.out.println("[PRAGMATRIX-EMAIL] SMTP_PORT            : " + resolvedPort);
+                    System.out.println("[PRAGMATRIX-EMAIL] SMTP_USERNAME        : " + (!resolvedUsername.isEmpty() ? resolvedUsername : "[NOT SET]"));
+                    System.out.println("[PRAGMATRIX-EMAIL] SMTP_PASSWORD        : " + (!resolvedPassword.isEmpty() ? "[SET (length " + resolvedPassword.length() + ")]" : "[NOT SET]"));
+                    System.out.println("[PRAGMATRIX-EMAIL] SMTP_FROM_EMAIL      : " + (!resolvedFromEmail.isEmpty() ? resolvedFromEmail : "[NOT SET]"));
+                    System.out.println("[PRAGMATRIX-EMAIL] SMTP_FROM_NAME       : " + resolvedFromName);
+                    System.out.println("================================================================================");
+
+                    initialized = true;
+                }
+            }
+        }
+    }
+
+    private static Properties loadFallbackProperties() {
+        Properties props = new Properties();
+        try (InputStream is = EmailService.class.getClassLoader().getResourceAsStream("email.properties")) {
             if (is != null) {
-                emailProps.load(is);
-                System.out.println("[PRAGMATRIX-EMAIL] Email configuration loaded from email.properties.");
-            } else {
-                System.out.println("[PRAGMATRIX-EMAIL] email.properties not found; checking environment variables.");
+                props.load(is);
+                System.out.println("[PRAGMATRIX-EMAIL] Loaded fallback configuration from classpath: email.properties");
             }
         } catch (IOException e) {
             System.err.println("[PRAGMATRIX-EMAIL] Failed to read email.properties: " + e.getMessage());
         }
-        initialized = true;
+        return props;
     }
 
-    private static String getPropOrEnv(String propKey, String envKey, String defaultValue) {
-        String val = null;
-        if (emailProps != null) {
-            val = emailProps.getProperty(propKey);
+    private static String getFromEnvOrSystem(String... keys) {
+        if (keys == null) return null;
+        for (String key : keys) {
+            String val = System.getenv(key);
+            if (val != null && !val.trim().isEmpty()) {
+                return val.trim();
+            }
         }
-        if (val == null || val.trim().isEmpty()) {
-            val = System.getenv(envKey);
+        for (String key : keys) {
+            String val = System.getProperty(key);
+            if (val != null && !val.trim().isEmpty()) {
+                return val.trim();
+            }
         }
-        return (val != null && !val.trim().isEmpty()) ? val.trim() : defaultValue;
+        return null;
+    }
+
+    private static String getFromEnvOrSystemOrProps(String envKey, String propKey, Properties props, String defaultValue) {
+        String val = getFromEnvOrSystem(envKey);
+        if (val != null && !val.trim().isEmpty()) {
+            return val.trim();
+        }
+        if (props != null) {
+            val = props.getProperty(propKey);
+            if (val != null && !val.trim().isEmpty()) {
+                return val.trim();
+            }
+            val = props.getProperty(envKey);
+            if (val != null && !val.trim().isEmpty()) {
+                return val.trim();
+            }
+        }
+        return defaultValue;
     }
 
     /**
@@ -114,16 +215,7 @@ public class EmailService {
     private static boolean sendEmail(String toEmail, String subject, String body) {
         loadConfig();
 
-        String host = getPropOrEnv("email.smtp.host", "SMTP_HOST", "smtp.gmail.com");
-        String port = getPropOrEnv("email.smtp.port", "SMTP_PORT", "587");
-        String username = getPropOrEnv("email.smtp.username", "SMTP_USERNAME", "");
-        if (username.isEmpty()) username = getPropOrEnv("email.smtp.username", "EMAIL_USERNAME", "");
-        String password = getPropOrEnv("email.smtp.password", "SMTP_PASSWORD", "");
-        if (password.isEmpty()) password = getPropOrEnv("email.smtp.password", "EMAIL_PASSWORD", "");
-        String fromEmail = getPropOrEnv("email.from.address", "EMAIL_FROM", username);
-        String fromName = getPropOrEnv("email.from.name", "EMAIL_FROM_NAME", "PRAGMATRIX 2026");
-
-        if (username.isEmpty() || password.isEmpty()) {
+        if (resolvedUsername == null || resolvedUsername.isEmpty() || resolvedPassword == null || resolvedPassword.isEmpty()) {
             System.err.println("[PRAGMATRIX-EMAIL] SMTP username/password not configured. Skipping send to: " + toEmail);
             return false;
         }
@@ -132,12 +224,12 @@ public class EmailService {
             Properties mailProps = new Properties();
             mailProps.put("mail.smtp.auth", "true");
             mailProps.put("mail.smtp.starttls.enable", "true");
-            mailProps.put("mail.smtp.host", host);
-            mailProps.put("mail.smtp.port", port);
-            mailProps.put("mail.smtp.ssl.trust", host);
+            mailProps.put("mail.smtp.host", resolvedHost);
+            mailProps.put("mail.smtp.port", resolvedPort);
+            mailProps.put("mail.smtp.ssl.trust", resolvedHost);
 
-            final String finalUsername = username;
-            final String finalPassword = password;
+            final String finalUsername = resolvedUsername;
+            final String finalPassword = resolvedPassword;
 
             Session session = Session.getInstance(mailProps, new Authenticator() {
                 @Override
@@ -147,7 +239,7 @@ public class EmailService {
             });
 
             Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(fromEmail, fromName));
+            message.setFrom(new InternetAddress(resolvedFromEmail, resolvedFromName));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
             message.setSubject(subject);
             message.setText(body);
