@@ -77,21 +77,19 @@ public class TeamScoreStatusServlet extends HttpServlet {
                 Score score = scoreMap.get(round.getRoundId());
                 if (round.isFinished() && score != null) {
                     rd.put("points", score.getPoints());
+                    rd.put("hasScore", true);
                     totalPoints += score.getPoints();
                 } else {
                     rd.put("points", null); // will appear as "Pending" on frontend
+                    rd.put("hasScore", false);
                 }
 
                 roundData.add(rd);
             }
 
-            // Calculate rank within quiz
-            int rank = calculateRank(team.getQuizCode(), teamCode, totalPoints);
-
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("rounds", roundData);
             result.put("totalPoints", totalPoints);
-            result.put("rank", rank);
             result.put("lastUpdated", System.currentTimeMillis());
 
             resp.setContentType("application/json");
@@ -105,26 +103,5 @@ public class TeamScoreStatusServlet extends HttpServlet {
             resp.setCharacterEncoding("UTF-8");
             resp.getWriter().write("{\"error\":\"Internal server error\"}");
         }
-    }
-
-    /**
-     * Calculate the rank of a team within its quiz based on total points.
-     * Uses the leaderboard view query pattern.
-     */
-    private int calculateRank(String quizCode, String teamCode, double teamTotalPoints) {
-        try {
-            List<Team> allTeams = teamDAO.findByQuizCode(quizCode);
-            // Sort by total points descending
-            allTeams.sort((a, b) -> Double.compare(b.getTotalPoints(), a.getTotalPoints()));
-
-            for (int i = 0; i < allTeams.size(); i++) {
-                if (allTeams.get(i).getUniqueId().equals(teamCode)) {
-                    return i + 1;
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("[PRAGMATRIX] Error calculating rank for " + teamCode + ": " + e.getMessage());
-        }
-        return 0; // unknown
     }
 }

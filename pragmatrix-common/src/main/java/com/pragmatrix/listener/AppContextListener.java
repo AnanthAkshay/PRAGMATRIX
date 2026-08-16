@@ -45,6 +45,13 @@ public class AppContextListener implements ServletContextListener {
         } catch (Exception e) {
             System.err.println("[PRAGMATRIX] Note: Leaderboard view check: " + e.getMessage());
         }
+
+        // Ensure VORTEX Round 4 is named GRAND FINALE across tables
+        try {
+            ensureVortexRoundNames();
+        } catch (Exception e) {
+            System.err.println("[PRAGMATRIX] Note: VORTEX Round 4 name check: " + e.getMessage());
+        }
     }
 
     @Override
@@ -128,6 +135,22 @@ public class AppContextListener implements ServletContextListener {
             System.out.println("[PRAGMATRIX] Leaderboard view verified/created.");
         } catch (Exception e) {
             System.err.println("[PRAGMATRIX] Note: Could not create leaderboard view (using direct queries): " + e.getMessage());
+        }
+    }
+
+    /**
+     * Ensures VORTEX Round 4 is named "GRAND FINALE" in both vortex_rounds and rounds tables.
+     */
+    private void ensureVortexRoundNames() {
+        String updateVortexRounds = "UPDATE vortex_rounds SET round_name = 'GRAND FINALE' WHERE display_order = 4 OR round_id = 4 OR round_name = 'Round 4' OR round_name = 'SLANCIO'";
+        String updateRounds = "UPDATE rounds SET round_name = 'GRAND FINALE' WHERE quiz_code = 'VORTEX' AND round_number = 4";
+        try (java.sql.Connection conn = DBConnection.getConnection();
+             java.sql.Statement stmt = conn.createStatement()) {
+            stmt.executeUpdate(updateVortexRounds);
+            stmt.executeUpdate(updateRounds);
+            System.out.println("[PRAGMATRIX] VORTEX Round 4 name verified/updated to GRAND FINALE.");
+        } catch (Exception e) {
+            System.err.println("[PRAGMATRIX] Note: Could not update VORTEX round names: " + e.getMessage());
         }
     }
 }

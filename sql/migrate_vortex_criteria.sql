@@ -61,7 +61,7 @@ INSERT INTO vortex_rounds (round_id, round_name, display_order) VALUES
 (1, 'TREORAI', 1),
 (2, 'KAIROS', 2),
 (3, 'ENMA', 3),
-(4, 'Round 4', 4);
+(4, 'GRAND FINALE', 4);
 
 -- ------------------------------------------------------------
 -- ROUND 1: TREORAI (Flat list, 1 component, 100 total)

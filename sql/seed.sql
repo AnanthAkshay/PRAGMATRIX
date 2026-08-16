@@ -16,10 +16,10 @@ ON DUPLICATE KEY UPDATE quiz_name = VALUES(quiz_name);
 -- Seed VORTEX rounds (fixed names)
 -- ------------------------------------------------------------
 INSERT INTO rounds (quiz_code, round_number, round_name, judging_criteria) VALUES
-    ('VORTEX', 1, 'KAIROS',   ''),
-    ('VORTEX', 2, 'THEORAI',  ''),
-    ('VORTEX', 3, 'ENMA',     ''),
-    ('VORTEX', 4, 'SLANCIO',  '')
+    ('VORTEX', 1, 'KAIROS',       ''),
+    ('VORTEX', 2, 'THEORAI',      ''),
+    ('VORTEX', 3, 'ENMA',         ''),
+    ('VORTEX', 4, 'GRAND FINALE', '')
 ON DUPLICATE KEY UPDATE round_name = VALUES(round_name);
 
 -- ------------------------------------------------------------

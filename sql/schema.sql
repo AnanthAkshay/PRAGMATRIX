@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS teams (
 -- ------------------------------------------------------------
 -- Rounds (4 per quiz)
 -- BIZWIZX: names are admin-editable
--- VORTEX:  names fixed to KAIROS / THEORAI / ENMA / SLANCIO
+-- VORTEX:  names fixed to TREORAI / KAIROS / ENMA / GRAND FINALE
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS rounds (
     round_id        INT AUTO_INCREMENT PRIMARY KEY,

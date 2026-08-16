@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * Servlet for managing VORTEX judging components and criteria.
- * Allows admin to view, add, edit, and delete components & criteria for any VORTEX round (including Round 4).
+ * Allows admin to view, add, edit, and delete components & criteria for any VORTEX round (including GRAND FINALE).
  */
 @WebServlet(name = "ManageCriteriaServlet", urlPatterns = {"/admin/manage-criteria"})
 public class ManageCriteriaServlet extends HttpServlet {
