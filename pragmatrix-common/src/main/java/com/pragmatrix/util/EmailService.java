@@ -1,106 +1,195 @@
 package com.pragmatrix.util;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import jakarta.mail.*;
 import jakarta.mail.internet.*;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Properties;
 
 /**
- * Utility for sending emails via SMTP (Jakarta Mail / Angus Mail).
+ * Enterprise Email Delivery Service for PRAGMATRIX 2026.
  * <p>
- * Configuration precedence:
+ * Supports both modern HTTPS-based Transactional Email APIs (Resend, Brevo, SendGrid,
+ * or generic REST API) and legacy SMTP fallback.
+ * </p>
+ * <p>
+ * HTTPS REST API delivery avoids port blocks (SMTP 25/465/587) on container platforms
+ * like Render Free.
+ * </p>
+ * <p>
+ * Configuration Precedence:
  * <ol>
- *   <li><b>OS Environment Variables (System.getenv)</b>: SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM_EMAIL, SMTP_FROM_NAME</li>
- *   <li><b>JVM System Properties (System.getProperty)</b>: -DSMTP_HOST=... or -Demail.smtp.host=...</li>
- *   <li><b>Classpath Properties file</b>: {@code email.properties}</li>
+ *   <li><b>HTTPS API via Environment Variables</b>: EMAIL_API_KEY / RESEND_API_KEY / BREVO_API_KEY / SENDGRID_API_KEY</li>
+ *   <li><b>HTTPS API via Properties File</b>: {@code email.properties} ({@code email.api.key})</li>
+ *   <li><b>SMTP via Environment Variables</b>: SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD</li>
+ *   <li><b>SMTP via Properties File</b>: {@code email.properties}</li>
  * </ol>
- * All send operations are wrapped in try/catch — failures are logged
- * server-side and never break calling code.
  * </p>
  */
 public class EmailService {
+
+    public enum TransportMode {
+        HTTPS_RESEND,
+        HTTPS_BREVO,
+        HTTPS_SENDGRID,
+        HTTPS_CUSTOM,
+        SMTP,
+        NONE
+    }
+
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(10))
+            .build();
 
     private static Properties emailProps;
     private static volatile boolean initialized = false;
     private static final Object LOCK = new Object();
 
-    private static String resolvedHost;
-    private static String resolvedPort;
-    private static String resolvedUsername;
-    private static String resolvedPassword;
+    // Resolved configuration
+    private static TransportMode transportMode = TransportMode.NONE;
+    private static String resolvedApiKey;
+    private static String resolvedApiUrl;
     private static String resolvedFromEmail;
     private static String resolvedFromName;
+
+    // SMTP fallback configuration
+    private static String smtpHost;
+    private static String smtpPort;
+    private static String smtpUsername;
+    private static String smtpPassword;
 
     private EmailService() {} // utility class
 
     /**
-     * Lazily load email configuration prioritizing System.getenv() first.
+     * Lazily load email configuration prioritizing HTTPS API environment variables.
      */
     private static void loadConfig() {
         if (!initialized) {
             synchronized (LOCK) {
                 if (!initialized) {
-                    // Step 1: Probe Environment Variables (System.getenv) & JVM System Properties directly first
+                    // 1. Probe HTTPS API Environment Variables
+                    String apiKey = getFromEnvOrSystem("EMAIL_API_KEY", "RESEND_API_KEY", "BREVO_API_KEY", "SENDINBLUE_API_KEY", "SENDGRID_API_KEY");
+                    String customApiUrl = getFromEnvOrSystem("EMAIL_API_URL");
+                    String providerHint = getFromEnvOrSystem("EMAIL_PROVIDER");
+
+                    // From Email & Name
+                    String fromEmail = getFromEnvOrSystem("EMAIL_FROM_ADDRESS", "EMAIL_FROM", "SMTP_FROM_EMAIL", "SMTP_FROM", "email.from.address");
+                    String fromName = getFromEnvOrSystem("EMAIL_FROM_NAME", "SMTP_FROM_NAME", "SMTP_NAME", "email.from.name");
+
+                    // 2. Probe SMTP Environment Variables
                     String host = getFromEnvOrSystem("SMTP_HOST", "email.smtp.host", "MAIL_HOST");
                     String port = getFromEnvOrSystem("SMTP_PORT", "email.smtp.port", "MAIL_PORT");
-                    String username = getFromEnvOrSystem("SMTP_USERNAME", "EMAIL_USERNAME", "email.smtp.username", "MAIL_USERNAME");
-                    String password = getFromEnvOrSystem("SMTP_PASSWORD", "EMAIL_PASSWORD", "email.smtp.password", "MAIL_PASSWORD");
-                    String fromEmail = getFromEnvOrSystem("SMTP_FROM_EMAIL", "EMAIL_FROM", "SMTP_FROM", "email.from.address");
-                    String fromName = getFromEnvOrSystem("SMTP_FROM_NAME", "EMAIL_FROM_NAME", "SMTP_NAME", "email.from.name");
+                    String smtpUser = getFromEnvOrSystem("SMTP_USERNAME", "EMAIL_USERNAME", "email.smtp.username", "MAIL_USERNAME");
+                    String smtpPass = getFromEnvOrSystem("SMTP_PASSWORD", "EMAIL_PASSWORD", "email.smtp.password", "MAIL_PASSWORD");
 
-                    boolean usingEnvVars = (username != null && !username.trim().isEmpty() && password != null && !password.trim().isEmpty());
-
-                    System.out.println("================================================================================");
-                    System.out.println("[PRAGMATRIX-EMAIL] Initialising Email (SMTP) Configuration...");
-
-                    if (usingEnvVars) {
-                        System.out.println("[PRAGMATRIX-EMAIL] Configuration Source : ENVIRONMENT VARIABLES (System.getenv)");
-                        resolvedHost = (host != null && !host.trim().isEmpty()) ? host.trim() : "smtp.gmail.com";
-                        resolvedPort = (port != null && !port.trim().isEmpty()) ? port.trim() : "587";
-                        resolvedUsername = username.trim();
-                        resolvedPassword = password.trim();
-                        resolvedFromEmail = (fromEmail != null && !fromEmail.trim().isEmpty()) ? fromEmail.trim() : resolvedUsername;
-                        resolvedFromName = (fromName != null && !fromName.trim().isEmpty()) ? fromName.trim() : "PRAGMATRIX 2026";
-                    } else {
-                        System.out.println("[PRAGMATRIX-EMAIL] No SMTP credentials in environment variables. Checking email.properties...");
+                    // 3. Fallback to email.properties if nothing in env
+                    if (apiKey == null && (smtpUser == null || smtpPass == null)) {
                         emailProps = loadFallbackProperties();
-
-                        resolvedHost = getFromEnvOrSystemOrProps("SMTP_HOST", "email.smtp.host", emailProps, "smtp.gmail.com");
-                        resolvedPort = getFromEnvOrSystemOrProps("SMTP_PORT", "email.smtp.port", emailProps, "587");
-                        resolvedUsername = getFromEnvOrSystemOrProps("SMTP_USERNAME", "email.smtp.username", emailProps, "");
-                        if (resolvedUsername.isEmpty()) {
-                            resolvedUsername = getFromEnvOrSystemOrProps("EMAIL_USERNAME", "email.smtp.username", emailProps, "");
+                        if (apiKey == null && emailProps != null) {
+                            apiKey = emailProps.getProperty("email.api.key");
+                            if (apiKey == null || apiKey.trim().isEmpty()) {
+                                apiKey = emailProps.getProperty("resend.api.key");
+                            }
                         }
-                        resolvedPassword = getFromEnvOrSystemOrProps("SMTP_PASSWORD", "email.smtp.password", emailProps, "");
-                        if (resolvedPassword.isEmpty()) {
-                            resolvedPassword = getFromEnvOrSystemOrProps("EMAIL_PASSWORD", "email.smtp.password", emailProps, "");
+                        if (customApiUrl == null && emailProps != null) {
+                            customApiUrl = emailProps.getProperty("email.api.url");
                         }
-                        resolvedFromEmail = getFromEnvOrSystemOrProps("SMTP_FROM_EMAIL", "email.from.address", emailProps, resolvedUsername);
-                        if (resolvedFromEmail == null || resolvedFromEmail.isEmpty()) {
-                            resolvedFromEmail = getFromEnvOrSystemOrProps("EMAIL_FROM", "email.from.address", emailProps, resolvedUsername);
+                        if (fromEmail == null && emailProps != null) {
+                            fromEmail = emailProps.getProperty("email.from.address");
                         }
-                        resolvedFromName = getFromEnvOrSystemOrProps("SMTP_FROM_NAME", "email.from.name", emailProps, "PRAGMATRIX 2026");
-                        if (resolvedFromName == null || resolvedFromName.isEmpty()) {
-                            resolvedFromName = getFromEnvOrSystemOrProps("EMAIL_FROM_NAME", "email.from.name", emailProps, "PRAGMATRIX 2026");
+                        if (fromName == null && emailProps != null) {
+                            fromName = emailProps.getProperty("email.from.name");
                         }
-
-                        if (!resolvedUsername.isEmpty() && !resolvedPassword.isEmpty()) {
-                            System.out.println("[PRAGMATRIX-EMAIL] Configuration Source : PROPERTIES FILE (email.properties)");
-                        } else {
-                            System.out.println("[PRAGMATRIX-EMAIL] Configuration Source : NONE (SMTP credentials missing)");
+                        if (host == null && emailProps != null) {
+                            host = emailProps.getProperty("email.smtp.host");
+                        }
+                        if (port == null && emailProps != null) {
+                            port = emailProps.getProperty("email.smtp.port");
+                        }
+                        if (smtpUser == null && emailProps != null) {
+                            smtpUser = emailProps.getProperty("email.smtp.username");
+                        }
+                        if (smtpPass == null && emailProps != null) {
+                            smtpPass = emailProps.getProperty("email.smtp.password");
                         }
                     }
 
-                    System.out.println("[PRAGMATRIX-EMAIL] SMTP_HOST            : " + resolvedHost);
-                    System.out.println("[PRAGMATRIX-EMAIL] SMTP_PORT            : " + resolvedPort);
-                    System.out.println("[PRAGMATRIX-EMAIL] SMTP_USERNAME        : " + (!resolvedUsername.isEmpty() ? resolvedUsername : "[NOT SET]"));
-                    System.out.println("[PRAGMATRIX-EMAIL] SMTP_PASSWORD        : " + (!resolvedPassword.isEmpty() ? "[SET (length " + resolvedPassword.length() + ")]" : "[NOT SET]"));
-                    System.out.println("[PRAGMATRIX-EMAIL] SMTP_FROM_EMAIL      : " + (!resolvedFromEmail.isEmpty() ? resolvedFromEmail : "[NOT SET]"));
-                    System.out.println("[PRAGMATRIX-EMAIL] SMTP_FROM_NAME       : " + resolvedFromName);
-                    System.out.println("================================================================================");
+                    // Resolve From details
+                    resolvedFromName = (fromName != null && !fromName.trim().isEmpty()) ? fromName.trim() : "PRAGMATRIX 2026";
+                    resolvedFromEmail = (fromEmail != null && !fromEmail.trim().isEmpty()) ? fromEmail.trim() : "";
 
+                    System.out.println("================================================================================");
+                    System.out.println("[PRAGMATRIX-EMAIL] Initialising Email Delivery Service...");
+
+                    if (apiKey != null && !apiKey.trim().isEmpty()) {
+                        resolvedApiKey = apiKey.trim();
+
+                        if (customApiUrl != null && !customApiUrl.trim().isEmpty()) {
+                            transportMode = TransportMode.HTTPS_CUSTOM;
+                            resolvedApiUrl = customApiUrl.trim();
+                        } else if ("brevo".equalsIgnoreCase(providerHint) || "sendinblue".equalsIgnoreCase(providerHint)
+                                || resolvedApiKey.startsWith("xkeysib-")
+                                || System.getenv("BREVO_API_KEY") != null
+                                || System.getenv("SENDINBLUE_API_KEY") != null) {
+                            transportMode = TransportMode.HTTPS_BREVO;
+                            resolvedApiUrl = "https://api.brevo.com/v3/smtp/email";
+                        } else if ("sendgrid".equalsIgnoreCase(providerHint)
+                                || resolvedApiKey.startsWith("SG.")
+                                || System.getenv("SENDGRID_API_KEY") != null) {
+                            transportMode = TransportMode.HTTPS_SENDGRID;
+                            resolvedApiUrl = "https://api.sendgrid.com/v3/mail/send";
+                        } else {
+                            // Default modern HTTPS provider: Resend
+                            transportMode = TransportMode.HTTPS_RESEND;
+                            resolvedApiUrl = "https://api.resend.com/emails";
+                            if (resolvedFromEmail.isEmpty()) {
+                                resolvedFromEmail = "onboarding@resend.dev";
+                            }
+                        }
+
+                        if (resolvedFromEmail.isEmpty()) {
+                            resolvedFromEmail = "pragmatrix2k26@gmail.com";
+                        }
+
+                        System.out.println("[PRAGMATRIX-EMAIL] Transport Mode       : HTTPS REST API (" + transportMode + ")");
+                        System.out.println("[PRAGMATRIX-EMAIL] API Endpoint         : " + resolvedApiUrl);
+                        System.out.println("[PRAGMATRIX-EMAIL] EMAIL_API_KEY        : [SET (length " + resolvedApiKey.length() + ")]");
+                        System.out.println("[PRAGMATRIX-EMAIL] EMAIL_FROM_ADDRESS   : " + resolvedFromEmail);
+                        System.out.println("[PRAGMATRIX-EMAIL] EMAIL_FROM_NAME      : " + resolvedFromName);
+
+                    } else if (smtpUser != null && !smtpUser.trim().isEmpty() && smtpPass != null && !smtpPass.trim().isEmpty()) {
+                        transportMode = TransportMode.SMTP;
+                        smtpHost = (host != null && !host.trim().isEmpty()) ? host.trim() : "smtp.gmail.com";
+                        smtpPort = (port != null && !port.trim().isEmpty()) ? port.trim() : "587";
+                        smtpUsername = smtpUser.trim();
+                        smtpPassword = smtpPass.trim();
+                        if (resolvedFromEmail.isEmpty()) {
+                            resolvedFromEmail = smtpUsername;
+                        }
+
+                        System.out.println("[PRAGMATRIX-EMAIL] Transport Mode       : SMTP (Legacy / Local Fallback)");
+                        System.out.println("[PRAGMATRIX-EMAIL] SMTP_HOST            : " + smtpHost);
+                        System.out.println("[PRAGMATRIX-EMAIL] SMTP_PORT            : " + smtpPort);
+                        System.out.println("[PRAGMATRIX-EMAIL] SMTP_USERNAME        : " + smtpUsername);
+                        System.out.println("[PRAGMATRIX-EMAIL] SMTP_PASSWORD        : [SET (length " + smtpPassword.length() + ")]");
+                        System.out.println("[PRAGMATRIX-EMAIL] SMTP_FROM_EMAIL      : " + resolvedFromEmail);
+                        System.out.println("[PRAGMATRIX-EMAIL] SMTP_FROM_NAME       : " + resolvedFromName);
+
+                    } else {
+                        transportMode = TransportMode.NONE;
+                        System.out.println("[PRAGMATRIX-EMAIL] Transport Mode       : NONE (No EMAIL_API_KEY or SMTP credentials provided)");
+                    }
+
+                    System.out.println("================================================================================");
                     initialized = true;
                 }
             }
@@ -135,24 +224,6 @@ public class EmailService {
             }
         }
         return null;
-    }
-
-    private static String getFromEnvOrSystemOrProps(String envKey, String propKey, Properties props, String defaultValue) {
-        String val = getFromEnvOrSystem(envKey);
-        if (val != null && !val.trim().isEmpty()) {
-            return val.trim();
-        }
-        if (props != null) {
-            val = props.getProperty(propKey);
-            if (val != null && !val.trim().isEmpty()) {
-                return val.trim();
-            }
-            val = props.getProperty(envKey);
-            if (val != null && !val.trim().isEmpty()) {
-                return val.trim();
-            }
-        }
-        return defaultValue;
     }
 
     /**
@@ -210,26 +281,162 @@ public class EmailService {
     }
 
     /**
-     * Core email-sending method.
+     * Core email dispatch router (routes to HTTPS API or SMTP fallback).
      */
     private static boolean sendEmail(String toEmail, String subject, String body) {
-        loadConfig();
-
-        if (resolvedUsername == null || resolvedUsername.isEmpty() || resolvedPassword == null || resolvedPassword.isEmpty()) {
-            System.err.println("[PRAGMATRIX-EMAIL] SMTP username/password not configured. Skipping send to: " + toEmail);
+        if (toEmail == null || toEmail.trim().isEmpty()) {
+            System.err.println("[PRAGMATRIX-EMAIL] Cannot send email: recipient address is empty.");
             return false;
         }
 
+        loadConfig();
+
+        if (transportMode == TransportMode.NONE) {
+            System.err.println("[PRAGMATRIX-EMAIL] Email service unconfigured (no EMAIL_API_KEY or SMTP credentials). Skipping send to: " + toEmail);
+            return false;
+        }
+
+        if (transportMode == TransportMode.SMTP) {
+            return sendViaSmtp(toEmail.trim(), subject, body);
+        } else {
+            return sendViaHttpsApi(toEmail.trim(), subject, body);
+        }
+    }
+
+    /**
+     * Dispatches email via HTTPS REST API with 10s connect and 15s request timeouts.
+     */
+    private static boolean sendViaHttpsApi(String toEmail, String subject, String body) {
+        try {
+            HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(resolvedApiUrl))
+                    .timeout(Duration.ofSeconds(15))
+                    .header("Content-Type", "application/json");
+
+            JsonObject payload;
+
+            switch (transportMode) {
+                case HTTPS_BREVO:
+                    reqBuilder.header("api-key", resolvedApiKey);
+                    payload = buildBrevoPayload(toEmail, subject, body);
+                    break;
+
+                case HTTPS_SENDGRID:
+                    reqBuilder.header("Authorization", "Bearer " + resolvedApiKey);
+                    payload = buildSendGridPayload(toEmail, subject, body);
+                    break;
+
+                case HTTPS_RESEND:
+                case HTTPS_CUSTOM:
+                default:
+                    reqBuilder.header("Authorization", "Bearer " + resolvedApiKey);
+                    payload = buildResendPayload(toEmail, subject, body);
+                    break;
+            }
+
+            HttpRequest request = reqBuilder
+                    .POST(HttpRequest.BodyPublishers.ofString(payload.toString(), StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            int statusCode = response.statusCode();
+
+            if (statusCode >= 200 && statusCode < 300) {
+                System.out.println("[PRAGMATRIX-EMAIL] Email sent successfully via HTTPS API (" + transportMode + ") to: " + toEmail + " [HTTP " + statusCode + "]");
+                return true;
+            } else {
+                System.err.println("[PRAGMATRIX-EMAIL] HTTPS email dispatch failed for " + toEmail + " [HTTP " + statusCode + "]: " + response.body());
+                return false;
+            }
+
+        } catch (Exception e) {
+            System.err.println("[PRAGMATRIX-EMAIL] HTTPS email exception for " + toEmail + ": " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private static JsonObject buildResendPayload(String toEmail, String subject, String body) {
+        JsonObject json = new JsonObject();
+        String fromHeader = (resolvedFromName != null && !resolvedFromName.isEmpty())
+                ? resolvedFromName + " <" + resolvedFromEmail + ">"
+                : resolvedFromEmail;
+        json.addProperty("from", fromHeader);
+
+        JsonArray toArray = new JsonArray();
+        toArray.add(toEmail);
+        json.add("to", toArray);
+
+        json.addProperty("subject", subject);
+        json.addProperty("text", body);
+        return json;
+    }
+
+    private static JsonObject buildBrevoPayload(String toEmail, String subject, String body) {
+        JsonObject json = new JsonObject();
+
+        JsonObject sender = new JsonObject();
+        sender.addProperty("name", resolvedFromName);
+        sender.addProperty("email", resolvedFromEmail);
+        json.add("sender", sender);
+
+        JsonArray toArray = new JsonArray();
+        JsonObject recipient = new JsonObject();
+        recipient.addProperty("email", toEmail);
+        toArray.add(recipient);
+        json.add("to", toArray);
+
+        json.addProperty("subject", subject);
+        json.addProperty("textContent", body);
+        return json;
+    }
+
+    private static JsonObject buildSendGridPayload(String toEmail, String subject, String body) {
+        JsonObject json = new JsonObject();
+
+        JsonArray personalizations = new JsonArray();
+        JsonObject p = new JsonObject();
+        JsonArray toArray = new JsonArray();
+        JsonObject recipient = new JsonObject();
+        recipient.addProperty("email", toEmail);
+        toArray.add(recipient);
+        p.add("to", toArray);
+        personalizations.add(p);
+        json.add("personalizations", personalizations);
+
+        JsonObject fromObj = new JsonObject();
+        fromObj.addProperty("email", resolvedFromEmail);
+        fromObj.addProperty("name", resolvedFromName);
+        json.add("from", fromObj);
+
+        json.addProperty("subject", subject);
+
+        JsonArray contentArray = new JsonArray();
+        JsonObject c = new JsonObject();
+        c.addProperty("type", "text/plain");
+        c.addProperty("value", body);
+        contentArray.add(c);
+        json.add("content", contentArray);
+
+        return json;
+    }
+
+    /**
+     * Fallback SMTP sender (if HTTPS API is not configured).
+     */
+    private static boolean sendViaSmtp(String toEmail, String subject, String body) {
         try {
             Properties mailProps = new Properties();
             mailProps.put("mail.smtp.auth", "true");
             mailProps.put("mail.smtp.starttls.enable", "true");
-            mailProps.put("mail.smtp.host", resolvedHost);
-            mailProps.put("mail.smtp.port", resolvedPort);
-            mailProps.put("mail.smtp.ssl.trust", resolvedHost);
+            mailProps.put("mail.smtp.host", smtpHost);
+            mailProps.put("mail.smtp.port", smtpPort);
+            mailProps.put("mail.smtp.ssl.trust", smtpHost);
+            mailProps.put("mail.smtp.connectiontimeout", "8000");
+            mailProps.put("mail.smtp.timeout", "10000");
 
-            final String finalUsername = resolvedUsername;
-            final String finalPassword = resolvedPassword;
+            final String finalUsername = smtpUsername;
+            final String finalPassword = smtpPassword;
 
             Session session = Session.getInstance(mailProps, new Authenticator() {
                 @Override
@@ -246,11 +453,11 @@ public class EmailService {
 
             Transport.send(message);
 
-            System.out.println("[PRAGMATRIX-EMAIL] Email sent successfully to: " + toEmail + " | Subject: " + subject);
+            System.out.println("[PRAGMATRIX-EMAIL] Email sent successfully via SMTP to: " + toEmail + " | Subject: " + subject);
             return true;
 
         } catch (Exception e) {
-            System.err.println("[PRAGMATRIX-EMAIL] Failed to send email to " + toEmail + ": " + e.getMessage());
+            System.err.println("[PRAGMATRIX-EMAIL] SMTP send failed for " + toEmail + ": " + e.getMessage());
             e.printStackTrace();
             return false;
         }

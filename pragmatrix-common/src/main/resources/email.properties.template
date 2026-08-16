@@ -1,14 +1,22 @@
 # ============================================================
-# PRAGMATRIX 2026 — Email (SMTP) Configuration Template
+# PRAGMATRIX 2026 — Email Delivery Configuration Template
 # ============================================================
-# Copy this file to email.properties and fill in your SMTP credentials.
-# For Gmail, use an App Password (not your main password).
-# See: https://support.google.com/accounts/answer/185833
+#
+# PRODUCTION / RENDER (Recommended: HTTPS Transactional Email API)
+# Set these in Render Environment tab or locally in email.properties:
+#
+# EMAIL_API_KEY=re_your_resend_or_brevo_key
+# EMAIL_FROM_ADDRESS=onboarding@resend.dev (or your verified domain email)
+# EMAIL_FROM_NAME=PRAGMATRIX 2026
+#
+# email.api.key=re_your_api_key
+# email.from.address=onboarding@resend.dev
+# email.from.name=PRAGMATRIX 2026
 
+# ------------------------------------------------------------
+# LOCAL / LEGACY SMTP FALLBACK (Optional)
+# ------------------------------------------------------------
 email.smtp.host=smtp.gmail.com
 email.smtp.port=587
 email.smtp.username=your-email@gmail.com
 email.smtp.password=your-app-password
-
-email.from.address=your-email@gmail.com
-email.from.name=PRAGMATRIX 2026
