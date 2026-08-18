@@ -37,15 +37,15 @@
     --ivory-light: #FAF7F0;
     --ivory-dark: #E8DFD0;
     --white: #FFFFFF;
-    --black: #1A1A1A;
-    --gray-800: #2D2D2D;
-    --gray-700: #404040;
-    --gray-600: #555555;
-    --gray-500: #777777;
-    --gray-400: #999999;
-    --gray-300: #BBBBBB;
-    --gray-200: #DDDDDD;
-    --gray-100: #F0F0F0;
+    --black: #111111;
+    --gray-800: #222222;
+    --gray-700: #333333;
+    --gray-600: #484848;
+    --gray-500: #606060;
+    --gray-400: #888888;
+    --gray-300: #B0B0B0;
+    --gray-200: #D5D5D5;
+    --gray-100: #EFEFEF;
 
     /* Semantic colors */
     --success: #2E7D32;
@@ -485,8 +485,21 @@ select.form-control {
    ============================================================ */
 .table-wrapper {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border-radius: var(--radius-md);
     border: 1px solid var(--glass-border);
+    width: 100%;
+}
+.table-wrapper::-webkit-scrollbar {
+    height: 6px;
+}
+.table-wrapper::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+}
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: var(--gold-600);
+    border-radius: 3px;
 }
 
 table.themed-table {
@@ -496,15 +509,15 @@ table.themed-table {
 }
 
 table.themed-table thead {
-    background: linear-gradient(135deg, var(--purple-800), var(--purple-700));
+    background: linear-gradient(135deg, var(--purple-900), var(--purple-800));
 }
 
 table.themed-table th {
-    padding: 0.75rem 1rem;
-    color: var(--gold-300);
+    padding: 0.8rem 1rem;
+    color: var(--gold-200);
     font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 0.8rem;
+    font-weight: 700;
+    font-size: 0.82rem;
     text-transform: uppercase;
     letter-spacing: 1px;
     text-align: left;
@@ -513,25 +526,26 @@ table.themed-table th {
 }
 
 table.themed-table td {
-    padding: 0.65rem 1rem;
-    border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.18);
     vertical-align: middle;
-    color: var(--gray-700);
+    color: var(--gray-800);
+    font-weight: 500;
 }
 
 table.themed-table tbody tr {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.85);
     transition: background var(--transition-fast);
 }
 table.themed-table tbody tr:hover {
-    background: rgba(212, 175, 55, 0.08);
+    background: rgba(212, 175, 55, 0.12);
 }
 
 table.themed-table tbody tr:nth-child(even) {
-    background: rgba(245, 239, 224, 0.5);
+    background: rgba(245, 239, 224, 0.7);
 }
 table.themed-table tbody tr:nth-child(even):hover {
-    background: rgba(212, 175, 55, 0.08);
+    background: rgba(212, 175, 55, 0.12);
 }
 
 /* Compact input inside tables */
@@ -1373,8 +1387,8 @@ table.themed-table tr.rank-3 td {
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
+    background: rgba(10, 2, 20, 0.7);
+    backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1390,18 +1404,22 @@ table.themed-table tr.rank-3 td {
     border: 2px solid var(--gold-600);
     border-radius: var(--radius-lg);
     padding: 2rem;
-    max-width: 450px;
+    max-width: 480px;
     width: 90%;
     text-align: center;
     box-shadow: var(--shadow-xl);
+    color: var(--gray-800);
 }
 .modal-dialog h3 {
     margin-bottom: 0.75rem;
+    color: var(--purple-900);
+    font-family: var(--font-display);
 }
 .modal-dialog p {
-    color: var(--gray-600);
+    color: var(--gray-700);
     margin-bottom: 1.5rem;
     font-size: 0.95rem;
+    line-height: 1.5;
 }
 .modal-dialog .modal-actions {
     display: flex;

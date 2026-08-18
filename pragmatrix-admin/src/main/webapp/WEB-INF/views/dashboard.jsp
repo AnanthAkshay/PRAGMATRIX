@@ -463,24 +463,24 @@
     <c:if test="${selectedQuiz == 'BIZWIZX'}">
         <!-- Ranked Elimination Modal for BIZWIZX Round 2 -->
         <div id="rankedEliminationModal2" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.78); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
-            <div class="glass-panel" style="max-width: 920px; width: 95%; max-height: 88vh; overflow-y: auto; background: #16192b; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 2rem; box-shadow: 0 12px 48px rgba(0,0,0,0.6);">
-                <div class="d-flex justify-between align-center mb-2">
+            <div class="glass-panel" style="max-width: 960px; width: 95%; max-height: 90vh; overflow-y: auto; background: #ffffff; border: 2px solid var(--gold-600); border-radius: 12px; padding: 1.75rem; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
+                <div class="d-flex justify-between align-center mb-2" style="border-bottom: 1px solid var(--gray-200); padding-bottom: 0.75rem;">
                     <div>
-                        <h3 style="margin: 0; color: #fff; font-size: 1.35rem; display: flex; align-items: center; gap: 0.5rem;">
-                            <span style="color: var(--gold-400);">&#9830;</span> Round 2 Standings &mdash; Eliminate Teams
+                        <h3 style="margin: 0; color: var(--purple-900); font-size: 1.35rem; font-family: var(--font-display); display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: var(--gold-600);">&#9830;</span> Round 2 Standings &mdash; Eliminate Teams
                         </h3>
-                        <p style="margin: 0.35rem 0 0 0; font-size: 0.85rem; color: var(--gray-400);">
+                        <p style="margin: 0.35rem 0 0 0; font-size: 0.85rem; color: var(--gray-700);">
                             Active teams ranked by cumulative score (<strong>Round 1 + Round 2</strong>). Teams marked as eliminated will be excluded from subsequent rounds.
                         </p>
                     </div>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="closeRankedEliminationModal(2)" style="font-size: 1.3rem; line-height: 1; padding: 0.2rem 0.6rem; color: #fff;">&times;</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="closeRankedEliminationModal(2)" style="font-size: 1.3rem; line-height: 1; padding: 0.2rem 0.6rem; color: var(--gray-700); border-color: var(--gray-400);">&times;</button>
                 </div>
 
                 <c:if test="${hasTieRound2}">
-                    <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fbbf24; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
-                        <span style="font-size: 1.1rem;">⚠️</span>
+                    <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid #f59e0b; color: #92400e; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
+                        <span style="font-size: 1.2rem;">⚠️</span>
                         <div>
-                            <strong>Tie Detected:</strong> Teams with identical cumulative scores are highlighted with a <span class="badge" style="background: #f59e0b; color: #000; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.7rem;">TIED</span> badge. Please review tiebreakers carefully before confirming elimination.
+                            <strong>Tie Detected:</strong> Teams with identical cumulative scores are highlighted with a <span class="badge" style="background: #f59e0b; color: #000000; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.7rem;">TIED</span> badge. Please review tiebreakers carefully before confirming elimination.
                         </div>
                     </div>
                 </c:if>
@@ -489,70 +489,74 @@
                     <input type="hidden" name="quizCode" value="BIZWIZX">
                     <input type="hidden" name="action" value="eliminate">
 
-                    <div style="max-height: 380px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; margin-bottom: 1.25rem;">
-                        <table class="themed-table" style="margin: 0;">
+                    <div style="max-height: 380px; overflow-y: auto; overflow-x: auto; border: 1px solid var(--gray-300); border-radius: 8px; margin-bottom: 1.25rem; background: #ffffff;">
+                        <table class="themed-table" style="width: 100%; margin: 0; table-layout: fixed;">
                             <thead>
                                 <tr>
                                     <th style="width: 40px; text-align: center;">
-                                        <input type="checkbox" id="selectAllR2" onchange="toggleSelectAllR(2, this)" style="cursor: pointer;">
+                                        <input type="checkbox" id="selectAllR2" onchange="toggleSelectAllR(2, this)" style="cursor: pointer; width: 16px; height: 16px;">
                                     </th>
                                     <th style="width: 75px; text-align: center;">Rank</th>
-                                    <th>Unique ID</th>
-                                    <th>College</th>
-                                    <th>Team Lead</th>
-                                    <th style="text-align: center;">R1 Pts</th>
-                                    <th style="text-align: center;">R2 Pts</th>
-                                    <th style="text-align: center;">Cumulative Total</th>
-                                    <th style="text-align: center;">Action</th>
+                                    <th style="width: 100px;">Team ID</th>
+                                    <th style="width: 220px;">College</th>
+                                    <th style="width: 140px;">Team Lead</th>
+                                    <th style="width: 70px; text-align: center;">R1 Pts</th>
+                                    <th style="width: 70px; text-align: center;">R2 Pts</th>
+                                    <th style="width: 95px; text-align: center;">Total</th>
+                                    <th style="width: 90px; text-align: center;">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <c:forEach var="entry" items="${round2Standings}" varStatus="status">
                                     <tr style="${entry.tied ? 'background: rgba(245, 158, 11, 0.08);' : ''}">
                                         <td style="text-align: center;">
-                                            <input type="checkbox" name="teamIds" value="${entry.uniqueId}" class="team-cb-r2" style="cursor: pointer;">
+                                            <input type="checkbox" name="teamIds" value="${entry.uniqueId}" class="team-cb-r2" style="cursor: pointer; width: 16px; height: 16px;">
                                         </td>
                                         <td style="text-align: center;">
                                             <c:choose>
                                                 <c:when test="${entry.rank == 1}">
-                                                    <span class="badge" style="background: rgba(234, 179, 8, 0.25); color: #facc15; border: 1px solid #facc15; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px;">#1</span>
+                                                    <span class="rank-badge gold" style="display: inline-flex; width: 26px; height: 26px; font-size: 0.8rem;">1</span>
                                                 </c:when>
                                                 <c:when test="${entry.rank == 2}">
-                                                    <span class="badge" style="background: rgba(203, 213, 225, 0.2); color: #e2e8f0; border: 1px solid #94a3b8; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px;">#2</span>
+                                                    <span class="rank-badge silver" style="display: inline-flex; width: 26px; height: 26px; font-size: 0.8rem;">2</span>
                                                 </c:when>
                                                 <c:when test="${entry.rank == 3}">
-                                                    <span class="badge" style="background: rgba(217, 119, 6, 0.25); color: #fb923c; border: 1px solid #ea580c; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px;">#3</span>
+                                                    <span class="rank-badge bronze" style="display: inline-flex; width: 26px; height: 26px; font-size: 0.8rem;">3</span>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <span style="font-weight: 600; color: var(--gray-300);">#${entry.rank}</span>
+                                                    <span class="rank-badge default" style="display: inline-flex; width: 26px; height: 26px; font-size: 0.8rem;">${entry.rank}</span>
                                                 </c:otherwise>
                                             </c:choose>
                                             <c:if test="${entry.tied}">
-                                                <span class="badge" style="background: #f59e0b; color: #000; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.3rem; border-radius: 3px; margin-left: 0.25rem;">TIED</span>
+                                                <span class="badge" style="background: #f59e0b; color: #000000; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.3rem; border-radius: 3px; margin-left: 0.2rem; vertical-align: middle;">TIED</span>
                                             </c:if>
                                         </td>
-                                        <td><strong style="color: var(--purple-700);"><c:out value="${entry.uniqueId}"/></strong></td>
-                                        <td><c:out value="${entry.collegeName}"/></td>
-                                        <td><c:out value="${entry.teamLeadName}"/></td>
-                                        <td style="text-align: center; color: var(--gray-300);">
-                                            <c:choose>
-                                                <c:when test="${not empty entry.roundPoints[1]}">${entry.roundPoints[1]}</c:when>
-                                                <c:otherwise>0</c:otherwise>
-                                            </c:choose>
+                                        <td><strong style="color: var(--purple-800); font-size: 0.9rem;"><c:out value="${entry.uniqueId}"/></strong></td>
+                                        <td><span style="color: #222222; font-weight: 500; font-size: 0.85rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<c:out value='${entry.collegeName}'/>"><c:out value="${entry.collegeName}"/></span></td>
+                                        <td><span style="color: #444444; font-size: 0.85rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<c:out value='${entry.teamLeadName}'/>"><c:out value="${entry.teamLeadName}"/></span></td>
+                                        <td style="text-align: center;">
+                                            <span style="color: #222222; font-weight: 600; font-size: 0.85rem;">
+                                                <c:choose>
+                                                    <c:when test="${entry.roundPoints[1] != null}"><fmt:formatNumber value="${entry.roundPoints[1]}" maxFractionDigits="2"/></c:when>
+                                                    <c:otherwise>&mdash;</c:otherwise>
+                                                </c:choose>
+                                            </span>
                                         </td>
-                                        <td style="text-align: center; color: var(--gray-300);">
-                                            <c:choose>
-                                                <c:when test="${not empty entry.roundPoints[2]}">${entry.roundPoints[2]}</c:when>
-                                                <c:otherwise>0</c:otherwise>
-                                            </c:choose>
+                                        <td style="text-align: center;">
+                                            <span style="color: #222222; font-weight: 600; font-size: 0.85rem;">
+                                                <c:choose>
+                                                    <c:when test="${entry.roundPoints[2] != null}"><fmt:formatNumber value="${entry.roundPoints[2]}" maxFractionDigits="2"/></c:when>
+                                                    <c:otherwise>&mdash;</c:otherwise>
+                                                </c:choose>
+                                            </span>
                                         </td>
                                         <td style="text-align: center;">
                                             <strong style="color: var(--gold-700); font-size: 1.05rem;">
-                                                <c:out value="${entry.totalPoints}"/>
+                                                <fmt:formatNumber value="${entry.totalPoints}" maxFractionDigits="2"/>
                                             </strong>
                                         </td>
                                         <td style="text-align: center;">
-                                            <button type="button" class="btn btn-danger btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;"
+                                            <button type="button" class="btn btn-outline btn-sm" style="color: #dc2626; border-color: #dc2626; padding: 0.25rem 0.5rem; font-size: 0.75rem; font-weight: 600;"
                                                     data-uid="${entry.uniqueId}"
                                                     data-college="<c:out value='${entry.collegeName}'/>"
                                                     data-lead="<c:out value='${entry.teamLeadName}'/>"
@@ -565,7 +569,7 @@
                                 </c:forEach>
                                 <c:if test="${empty round2Standings}">
                                     <tr>
-                                        <td colspan="9" style="text-align: center; padding: 2rem; color: var(--gray-400);">
+                                        <td colspan="9" style="text-align: center; padding: 2rem; color: var(--gray-500);">
                                             No active teams found for Round 2 standings.
                                         </td>
                                     </tr>
@@ -576,17 +580,17 @@
 
                     <div class="d-flex justify-between align-center flex-wrap gap-sm">
                         <div class="d-flex gap-sm align-center">
-                            <span style="font-size: 0.8rem; color: var(--gray-400);">Quick Select:</span>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="selectBottomTeams(2, 1)" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Bottom 1</button>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="selectBottomTeams(2, 3)" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Bottom 3</button>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="selectBottomTeams(2, 5)" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Bottom 5</button>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="clearSelection(2)" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Clear</button>
+                            <span style="font-size: 0.82rem; font-weight: 600; color: var(--gray-700);">Quick Select:</span>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="selectBottomTeams(2, 1)" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--purple-800); border-color: var(--purple-800); font-weight: 600;">Bottom 1</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="selectBottomTeams(2, 3)" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--purple-800); border-color: var(--purple-800); font-weight: 600;">Bottom 3</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="selectBottomTeams(2, 5)" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--purple-800); border-color: var(--purple-800); font-weight: 600;">Bottom 5</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="clearSelection(2)" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--gray-600); border-color: var(--gray-400);">Clear</button>
                         </div>
                         <div class="d-flex gap-sm">
-                            <button type="button" class="btn btn-danger btn-sm" onclick="submitRankedElimination(2)" style="font-weight: 600;">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="submitRankedElimination(2)" style="font-weight: 600; padding: 0.4rem 0.9rem;">
                                 Eliminate Selected Teams
                             </button>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="closeRankedEliminationModal(2)">Close</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="closeRankedEliminationModal(2)" style="padding: 0.4rem 0.8rem; color: var(--gray-700); border-color: var(--gray-400);">Close</button>
                         </div>
                     </div>
                 </form>
@@ -595,24 +599,24 @@
 
         <!-- Ranked Elimination Modal for BIZWIZX Round 3 -->
         <div id="rankedEliminationModal3" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.78); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
-            <div class="glass-panel" style="max-width: 950px; width: 95%; max-height: 88vh; overflow-y: auto; background: #16192b; border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px; padding: 2rem; box-shadow: 0 12px 48px rgba(0,0,0,0.6);">
-                <div class="d-flex justify-between align-center mb-2">
+            <div class="glass-panel" style="max-width: 960px; width: 95%; max-height: 90vh; overflow-y: auto; background: #ffffff; border: 2px solid var(--gold-600); border-radius: 12px; padding: 1.75rem; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
+                <div class="d-flex justify-between align-center mb-2" style="border-bottom: 1px solid var(--gray-200); padding-bottom: 0.75rem;">
                     <div>
-                        <h3 style="margin: 0; color: #fff; font-size: 1.35rem; display: flex; align-items: center; gap: 0.5rem;">
-                            <span style="color: var(--gold-400);">&#9830;</span> Round 3 Standings &mdash; Eliminate Teams
+                        <h3 style="margin: 0; color: var(--purple-900); font-size: 1.35rem; font-family: var(--font-display); display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: var(--gold-600);">&#9830;</span> Round 3 Standings &mdash; Eliminate Teams
                         </h3>
-                        <p style="margin: 0.35rem 0 0 0; font-size: 0.85rem; color: var(--gray-400);">
+                        <p style="margin: 0.35rem 0 0 0; font-size: 0.85rem; color: var(--gray-700);">
                             Active teams ranked by cumulative score across <strong>Rounds 1 + 2 + 3</strong> (excluding teams already eliminated after Round 2). Select teams to eliminate before Grand Finale.
                         </p>
                     </div>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="closeRankedEliminationModal(3)" style="font-size: 1.3rem; line-height: 1; padding: 0.2rem 0.6rem; color: #fff;">&times;</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="closeRankedEliminationModal(3)" style="font-size: 1.3rem; line-height: 1; padding: 0.2rem 0.6rem; color: var(--gray-700); border-color: var(--gray-400);">&times;</button>
                 </div>
 
                 <c:if test="${hasTieRound3}">
-                    <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fbbf24; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
-                        <span style="font-size: 1.1rem;">⚠️</span>
+                    <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid #f59e0b; color: #92400e; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.6rem;">
+                        <span style="font-size: 1.2rem;">⚠️</span>
                         <div>
-                            <strong>Tie Detected:</strong> Teams with identical cumulative scores are highlighted with a <span class="badge" style="background: #f59e0b; color: #000; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.7rem;">TIED</span> badge. Please review tiebreakers carefully before confirming elimination.
+                            <strong>Tie Detected:</strong> Teams with identical cumulative scores are highlighted with a <span class="badge" style="background: #f59e0b; color: #000000; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.7rem;">TIED</span> badge. Please review tiebreakers carefully before confirming elimination.
                         </div>
                     </div>
                 </c:if>
@@ -621,77 +625,83 @@
                     <input type="hidden" name="quizCode" value="BIZWIZX">
                     <input type="hidden" name="action" value="eliminate">
 
-                    <div style="max-height: 380px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; margin-bottom: 1.25rem;">
-                        <table class="themed-table" style="margin: 0;">
+                    <div style="max-height: 380px; overflow-y: auto; overflow-x: auto; border: 1px solid var(--gray-300); border-radius: 8px; margin-bottom: 1.25rem; background: #ffffff;">
+                        <table class="themed-table" style="width: 100%; margin: 0; table-layout: fixed;">
                             <thead>
                                 <tr>
                                     <th style="width: 40px; text-align: center;">
-                                        <input type="checkbox" id="selectAllR3" onchange="toggleSelectAllR(3, this)" style="cursor: pointer;">
+                                        <input type="checkbox" id="selectAllR3" onchange="toggleSelectAllR(3, this)" style="cursor: pointer; width: 16px; height: 16px;">
                                     </th>
                                     <th style="width: 75px; text-align: center;">Rank</th>
-                                    <th>Unique ID</th>
-                                    <th>College</th>
-                                    <th>Team Lead</th>
-                                    <th style="text-align: center;">R1 Pts</th>
-                                    <th style="text-align: center;">R2 Pts</th>
-                                    <th style="text-align: center;">R3 Pts</th>
-                                    <th style="text-align: center;">Cumulative Total</th>
-                                    <th style="text-align: center;">Action</th>
+                                    <th style="width: 100px;">Team ID</th>
+                                    <th style="width: 200px;">College</th>
+                                    <th style="width: 130px;">Team Lead</th>
+                                    <th style="width: 60px; text-align: center;">R1 Pts</th>
+                                    <th style="width: 60px; text-align: center;">R2 Pts</th>
+                                    <th style="width: 60px; text-align: center;">R3 Pts</th>
+                                    <th style="width: 95px; text-align: center;">Total</th>
+                                    <th style="width: 90px; text-align: center;">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <c:forEach var="entry" items="${round3Standings}" varStatus="status">
                                     <tr style="${entry.tied ? 'background: rgba(245, 158, 11, 0.08);' : ''}">
                                         <td style="text-align: center;">
-                                            <input type="checkbox" name="teamIds" value="${entry.uniqueId}" class="team-cb-r3" style="cursor: pointer;">
+                                            <input type="checkbox" name="teamIds" value="${entry.uniqueId}" class="team-cb-r3" style="cursor: pointer; width: 16px; height: 16px;">
                                         </td>
                                         <td style="text-align: center;">
                                             <c:choose>
                                                 <c:when test="${entry.rank == 1}">
-                                                    <span class="badge" style="background: rgba(234, 179, 8, 0.25); color: #facc15; border: 1px solid #facc15; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px;">#1</span>
+                                                    <span class="rank-badge gold" style="display: inline-flex; width: 26px; height: 26px; font-size: 0.8rem;">1</span>
                                                 </c:when>
                                                 <c:when test="${entry.rank == 2}">
-                                                    <span class="badge" style="background: rgba(203, 213, 225, 0.2); color: #e2e8f0; border: 1px solid #94a3b8; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px;">#2</span>
+                                                    <span class="rank-badge silver" style="display: inline-flex; width: 26px; height: 26px; font-size: 0.8rem;">2</span>
                                                 </c:when>
                                                 <c:when test="${entry.rank == 3}">
-                                                    <span class="badge" style="background: rgba(217, 119, 6, 0.25); color: #fb923c; border: 1px solid #ea580c; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px;">#3</span>
+                                                    <span class="rank-badge bronze" style="display: inline-flex; width: 26px; height: 26px; font-size: 0.8rem;">3</span>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <span style="font-weight: 600; color: var(--gray-300);">#${entry.rank}</span>
+                                                    <span class="rank-badge default" style="display: inline-flex; width: 26px; height: 26px; font-size: 0.8rem;">${entry.rank}</span>
                                                 </c:otherwise>
                                             </c:choose>
                                             <c:if test="${entry.tied}">
-                                                <span class="badge" style="background: #f59e0b; color: #000; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.3rem; border-radius: 3px; margin-left: 0.25rem;">TIED</span>
+                                                <span class="badge" style="background: #f59e0b; color: #000000; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.3rem; border-radius: 3px; margin-left: 0.2rem; vertical-align: middle;">TIED</span>
                                             </c:if>
                                         </td>
-                                        <td><strong style="color: var(--purple-700);"><c:out value="${entry.uniqueId}"/></strong></td>
-                                        <td><c:out value="${entry.collegeName}"/></td>
-                                        <td><c:out value="${entry.teamLeadName}"/></td>
-                                        <td style="text-align: center; color: var(--gray-300);">
-                                            <c:choose>
-                                                <c:when test="${not empty entry.roundPoints[1]}">${entry.roundPoints[1]}</c:when>
-                                                <c:otherwise>0</c:otherwise>
-                                            </c:choose>
+                                        <td><strong style="color: var(--purple-800); font-size: 0.9rem;"><c:out value="${entry.uniqueId}"/></strong></td>
+                                        <td><span style="color: #222222; font-weight: 500; font-size: 0.85rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<c:out value='${entry.collegeName}'/>"><c:out value="${entry.collegeName}"/></span></td>
+                                        <td><span style="color: #444444; font-size: 0.85rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<c:out value='${entry.teamLeadName}'/>"><c:out value="${entry.teamLeadName}"/></span></td>
+                                        <td style="text-align: center;">
+                                            <span style="color: #222222; font-weight: 600; font-size: 0.85rem;">
+                                                <c:choose>
+                                                    <c:when test="${entry.roundPoints[1] != null}"><fmt:formatNumber value="${entry.roundPoints[1]}" maxFractionDigits="2"/></c:when>
+                                                    <c:otherwise>&mdash;</c:otherwise>
+                                                </c:choose>
+                                            </span>
                                         </td>
-                                        <td style="text-align: center; color: var(--gray-300);">
-                                            <c:choose>
-                                                <c:when test="${not empty entry.roundPoints[2]}">${entry.roundPoints[2]}</c:when>
-                                                <c:otherwise>0</c:otherwise>
-                                            </c:choose>
+                                        <td style="text-align: center;">
+                                            <span style="color: #222222; font-weight: 600; font-size: 0.85rem;">
+                                                <c:choose>
+                                                    <c:when test="${entry.roundPoints[2] != null}"><fmt:formatNumber value="${entry.roundPoints[2]}" maxFractionDigits="2"/></c:when>
+                                                    <c:otherwise>&mdash;</c:otherwise>
+                                                </c:choose>
+                                            </span>
                                         </td>
-                                        <td style="text-align: center; color: var(--gray-300);">
-                                            <c:choose>
-                                                <c:when test="${not empty entry.roundPoints[3]}">${entry.roundPoints[3]}</c:when>
-                                                <c:otherwise>0</c:otherwise>
-                                            </c:choose>
+                                        <td style="text-align: center;">
+                                            <span style="color: #222222; font-weight: 600; font-size: 0.85rem;">
+                                                <c:choose>
+                                                    <c:when test="${entry.roundPoints[3] != null}"><fmt:formatNumber value="${entry.roundPoints[3]}" maxFractionDigits="2"/></c:when>
+                                                    <c:otherwise>&mdash;</c:otherwise>
+                                                </c:choose>
+                                            </span>
                                         </td>
                                         <td style="text-align: center;">
                                             <strong style="color: var(--gold-700); font-size: 1.05rem;">
-                                                <c:out value="${entry.totalPoints}"/>
+                                                <fmt:formatNumber value="${entry.totalPoints}" maxFractionDigits="2"/>
                                             </strong>
                                         </td>
                                         <td style="text-align: center;">
-                                            <button type="button" class="btn btn-danger btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;"
+                                            <button type="button" class="btn btn-outline btn-sm" style="color: #dc2626; border-color: #dc2626; padding: 0.25rem 0.5rem; font-size: 0.75rem; font-weight: 600;"
                                                     data-uid="${entry.uniqueId}"
                                                     data-college="<c:out value='${entry.collegeName}'/>"
                                                     data-lead="<c:out value='${entry.teamLeadName}'/>"
@@ -704,7 +714,7 @@
                                 </c:forEach>
                                 <c:if test="${empty round3Standings}">
                                     <tr>
-                                        <td colspan="10" style="text-align: center; padding: 2rem; color: var(--gray-400);">
+                                        <td colspan="10" style="text-align: center; padding: 2rem; color: var(--gray-500);">
                                             No active teams found for Round 3 standings.
                                         </td>
                                     </tr>
@@ -715,17 +725,17 @@
 
                     <div class="d-flex justify-between align-center flex-wrap gap-sm">
                         <div class="d-flex gap-sm align-center">
-                            <span style="font-size: 0.8rem; color: var(--gray-400);">Quick Select:</span>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="selectBottomTeams(3, 1)" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Bottom 1</button>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="selectBottomTeams(3, 3)" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Bottom 3</button>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="selectBottomTeams(3, 5)" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Bottom 5</button>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="clearSelection(3)" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Clear</button>
+                            <span style="font-size: 0.82rem; font-weight: 600; color: var(--gray-700);">Quick Select:</span>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="selectBottomTeams(3, 1)" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--purple-800); border-color: var(--purple-800); font-weight: 600;">Bottom 1</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="selectBottomTeams(3, 3)" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--purple-800); border-color: var(--purple-800); font-weight: 600;">Bottom 3</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="selectBottomTeams(3, 5)" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--purple-800); border-color: var(--purple-800); font-weight: 600;">Bottom 5</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="clearSelection(3)" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--gray-600); border-color: var(--gray-400);">Clear</button>
                         </div>
                         <div class="d-flex gap-sm">
-                            <button type="button" class="btn btn-danger btn-sm" onclick="submitRankedElimination(3)" style="font-weight: 600;">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="submitRankedElimination(3)" style="font-weight: 600; padding: 0.4rem 0.9rem;">
                                 Eliminate Selected Teams
                             </button>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="closeRankedEliminationModal(3)">Close</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="closeRankedEliminationModal(3)" style="padding: 0.4rem 0.8rem; color: var(--gray-700); border-color: var(--gray-400);">Close</button>
                         </div>
                     </div>
                 </form>
@@ -735,26 +745,26 @@
 
     <!-- ===== VORTEX FINALE ADVANCEMENT MODAL ===== -->
     <c:if test="${selectedQuiz == 'VORTEX' && not empty vortexFinaleStandings}">
-        <div id="vortexAdvanceModal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-            <div class="glass-panel" style="max-width: 950px; width: 95%; max-height: 90vh; overflow-y: auto; background: var(--bg-card); border: 1px solid var(--gold-500); box-shadow: 0 10px 30px rgba(0,0,0,0.5); padding: 1.75rem; border-radius: 12px;">
+        <div id="vortexAdvanceModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.78); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+            <div class="glass-panel" style="max-width: 960px; width: 95%; max-height: 90vh; overflow-y: auto; background: #ffffff; border: 2px solid var(--purple-800); box-shadow: 0 20px 60px rgba(0,0,0,0.4); padding: 1.75rem; border-radius: 12px;">
                 
-                <div class="d-flex justify-between align-center mb-2" style="border-bottom: 1px solid rgba(212,175,55,0.2); padding-bottom: 0.75rem;">
+                <div class="d-flex justify-between align-center mb-2" style="border-bottom: 1px solid var(--gray-200); padding-bottom: 0.75rem;">
                     <div>
-                        <h3 class="section-title mb-0" style="color: var(--gold-600); font-size: 1.25rem;">
+                        <h3 class="section-title mb-0" style="color: var(--purple-900); font-size: 1.35rem; font-family: var(--font-display);">
                             <span class="title-accent">&#11088;</span> VORTEX &mdash; Advance Top 3 Teams to GRAND FINALE
                         </h3>
-                        <p style="margin: 0.25rem 0 0 0; color: var(--gray-600); font-size: 0.85rem;">
+                        <p style="margin: 0.35rem 0 0 0; color: var(--gray-700); font-size: 0.85rem;">
                             Cumulative standings across <strong>KAIROS (R1)</strong>, <strong>TREORAI (R2)</strong>, and <strong>ENMA (R3)</strong>. Select the 3 finalist teams to advance to <strong>GRAND FINALE</strong>.
                         </p>
                     </div>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="closeVortexAdvanceModal()" style="padding: 0.25rem 0.6rem;">&times;</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="closeVortexAdvanceModal()" style="font-size: 1.3rem; line-height: 1; padding: 0.2rem 0.6rem; color: var(--gray-700); border-color: var(--gray-400);">&times;</button>
                 </div>
 
                 <c:if test="${hasTieAtCutoffVortex}">
-                    <div class="alert alert-warning" style="margin-bottom: 1.25rem; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); color: #d97706; display: flex; align-items: flex-start; gap: 0.75rem; border-radius: 8px; padding: 0.85rem 1rem;">
+                    <div class="alert alert-warning" style="margin-bottom: 1.25rem; background: rgba(245, 158, 11, 0.12); border: 1px solid #f59e0b; color: #92400e; display: flex; align-items: flex-start; gap: 0.75rem; border-radius: 8px; padding: 0.85rem 1rem;">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                         <div>
-                            <strong style="font-size: 0.95rem;">&#9888; Tie Detected at 3rd Place Cutoff!</strong>
+                            <strong style="font-size: 0.95rem;">⚠️ Tie Detected at 3rd Place Cutoff!</strong>
                             <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; line-height: 1.4;">
                                 Multiple teams share identical scores at the 3rd place qualifying boundary. The system will NOT automatically guess which team advances. Please review the round scores and manually check the 3 teams you wish to qualify.
                             </p>
@@ -765,22 +775,22 @@
                 <form id="vortexAdvanceForm" action="${pageContext.request.contextPath}/admin/advance-finale" method="POST">
                     <input type="hidden" name="quizCode" value="VORTEX">
 
-                    <div class="table-wrapper mb-2" style="max-height: 420px; overflow-y: auto;">
-                        <table class="themed-table" style="font-size: 0.9rem;">
+                    <div style="max-height: 380px; overflow-y: auto; overflow-x: auto; border: 1px solid var(--gray-300); border-radius: 8px; margin-bottom: 1.25rem; background: #ffffff;">
+                        <table class="themed-table" style="width: 100%; margin: 0; table-layout: fixed; font-size: 0.9rem;">
                             <thead>
                                 <tr>
                                     <th style="width: 40px; text-align: center;">
-                                        <input type="checkbox" id="selectAllVortexAdvance" onchange="toggleSelectAllVortex(this)" title="Select/Deselect All">
+                                        <input type="checkbox" id="selectAllVortexAdvance" onchange="toggleSelectAllVortex(this)" title="Select/Deselect All" style="cursor: pointer; width: 16px; height: 16px;">
                                     </th>
-                                    <th style="width: 60px;">Rank</th>
-                                    <th>Unique ID</th>
-                                    <th>College Name</th>
-                                    <th>Team Lead</th>
-                                    <th style="text-align: right;">Kairos (R1)</th>
-                                    <th style="text-align: right;">Treorai (R2)</th>
-                                    <th style="text-align: right;">Enma (R3)</th>
-                                    <th style="text-align: right;">Cumulative</th>
-                                    <th style="text-align: center;">Status</th>
+                                    <th style="width: 75px; text-align: center;">Rank</th>
+                                    <th style="width: 100px;">Team ID</th>
+                                    <th style="width: 200px;">College Name</th>
+                                    <th style="width: 130px;">Team Lead</th>
+                                    <th style="width: 65px; text-align: center;">Kairos</th>
+                                    <th style="width: 65px; text-align: center;">Treorai</th>
+                                    <th style="width: 65px; text-align: center;">Enma</th>
+                                    <th style="width: 95px; text-align: center;">Cumulative</th>
+                                    <th style="width: 90px; text-align: center;">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -791,46 +801,64 @@
                                                    class="vortex-advance-cb"
                                                    data-index="${status.index}"
                                                    data-rank="${entry.rank}"
+                                                   style="cursor: pointer; width: 16px; height: 16px;"
                                                    <c:if test="${entry.advanced || (status.index < 3 && !hasTieAtCutoffVortex)}">checked</c:if>>
                                         </td>
-                                        <td>
-                                            <strong style="color: ${status.index < 3 ? 'var(--gold-600)' : 'var(--gray-600)'}; font-size: 0.95rem;">
-                                                #${entry.rank}
-                                            </strong>
+                                        <td style="text-align: center;">
+                                            <c:choose>
+                                                <c:when test="${entry.rank == 1}">
+                                                    <span class="rank-badge gold" style="display: inline-flex; width: 26px; height: 26px; font-size: 0.8rem;">1</span>
+                                                </c:when>
+                                                <c:when test="${entry.rank == 2}">
+                                                    <span class="rank-badge silver" style="display: inline-flex; width: 26px; height: 26px; font-size: 0.8rem;">2</span>
+                                                </c:when>
+                                                <c:when test="${entry.rank == 3}">
+                                                    <span class="rank-badge bronze" style="display: inline-flex; width: 26px; height: 26px; font-size: 0.8rem;">3</span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="rank-badge default" style="display: inline-flex; width: 26px; height: 26px; font-size: 0.8rem;">${entry.rank}</span>
+                                                </c:otherwise>
+                                            </c:choose>
                                             <c:if test="${entry.tied}">
-                                                <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #d97706; font-size: 0.65rem; padding: 0.1rem 0.3rem; margin-left: 2px;">TIED</span>
+                                                <span class="badge" style="background: #f59e0b; color: #000000; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.3rem; border-radius: 3px; margin-left: 0.2rem; vertical-align: middle;">TIED</span>
                                             </c:if>
                                         </td>
-                                        <td><strong style="color: var(--purple-700);"><c:out value="${entry.uniqueId}"/></strong></td>
-                                        <td><c:out value="${entry.collegeName}"/></td>
-                                        <td><c:out value="${entry.teamLeadName}"/></td>
-                                        <td style="text-align: right; color: var(--gray-600);">
-                                            <c:choose>
-                                                <c:when test="${entry.roundPoints[1] != null}"><fmt:formatNumber value="${entry.roundPoints[1]}" minFractionDigits="0" maxFractionDigits="2"/></c:when>
-                                                <c:otherwise>&mdash;</c:otherwise>
-                                            </c:choose>
+                                        <td><strong style="color: var(--purple-800); font-size: 0.9rem;"><c:out value="${entry.uniqueId}"/></strong></td>
+                                        <td><span style="color: #222222; font-weight: 500; font-size: 0.85rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<c:out value='${entry.collegeName}'/>"><c:out value="${entry.collegeName}"/></span></td>
+                                        <td><span style="color: #444444; font-size: 0.85rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<c:out value='${entry.teamLeadName}'/>"><c:out value="${entry.teamLeadName}"/></span></td>
+                                        <td style="text-align: center;">
+                                            <span style="color: #222222; font-weight: 600; font-size: 0.85rem;">
+                                                <c:choose>
+                                                    <c:when test="${entry.roundPoints[1] != null}"><fmt:formatNumber value="${entry.roundPoints[1]}" maxFractionDigits="2"/></c:when>
+                                                    <c:otherwise>&mdash;</c:otherwise>
+                                                </c:choose>
+                                            </span>
                                         </td>
-                                        <td style="text-align: right; color: var(--gray-600);">
-                                            <c:choose>
-                                                <c:when test="${entry.roundPoints[2] != null}"><fmt:formatNumber value="${entry.roundPoints[2]}" minFractionDigits="0" maxFractionDigits="2"/></c:when>
-                                                <c:otherwise>&mdash;</c:otherwise>
-                                            </c:choose>
+                                        <td style="text-align: center;">
+                                            <span style="color: #222222; font-weight: 600; font-size: 0.85rem;">
+                                                <c:choose>
+                                                    <c:when test="${entry.roundPoints[2] != null}"><fmt:formatNumber value="${entry.roundPoints[2]}" maxFractionDigits="2"/></c:when>
+                                                    <c:otherwise>&mdash;</c:otherwise>
+                                                </c:choose>
+                                            </span>
                                         </td>
-                                        <td style="text-align: right; color: var(--gray-600);">
-                                            <c:choose>
-                                                <c:when test="${entry.roundPoints[3] != null}"><fmt:formatNumber value="${entry.roundPoints[3]}" minFractionDigits="0" maxFractionDigits="2"/></c:when>
-                                                <c:otherwise>&mdash;</c:otherwise>
-                                            </c:choose>
+                                        <td style="text-align: center;">
+                                            <span style="color: #222222; font-weight: 600; font-size: 0.85rem;">
+                                                <c:choose>
+                                                    <c:when test="${entry.roundPoints[3] != null}"><fmt:formatNumber value="${entry.roundPoints[3]}" maxFractionDigits="2"/></c:when>
+                                                    <c:otherwise>&mdash;</c:otherwise>
+                                                </c:choose>
+                                            </span>
                                         </td>
-                                        <td style="text-align: right;">
-                                            <strong style="color: var(--gold-700); font-size: 1rem;">
-                                                <fmt:formatNumber value="${entry.totalPoints}" minFractionDigits="0" maxFractionDigits="2"/>
+                                        <td style="text-align: center;">
+                                            <strong style="color: var(--gold-700); font-size: 1.05rem;">
+                                                <fmt:formatNumber value="${entry.totalPoints}" maxFractionDigits="2"/>
                                             </strong>
                                         </td>
                                         <td style="text-align: center;">
                                             <c:choose>
                                                 <c:when test="${entry.advanced}">
-                                                    <span class="badge" style="background: rgba(124, 58, 237, 0.15); color: #7c3aed; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600;">
+                                                    <span class="badge" style="background: rgba(124, 58, 237, 0.15); color: #7c3aed; font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700;">
                                                         Finalist
                                                     </span>
                                                 </c:when>
@@ -845,7 +873,7 @@
                                 </c:forEach>
                                 <c:if test="${empty vortexFinaleStandings}">
                                     <tr>
-                                        <td colspan="10" style="text-align: center; padding: 2rem; color: var(--gray-400);">
+                                        <td colspan="10" style="text-align: center; padding: 2rem; color: var(--gray-500);">
                                             No teams or scores recorded for VORTEX rounds 1 to 3 yet.
                                         </td>
                                     </tr>
@@ -856,15 +884,15 @@
 
                     <div class="d-flex justify-between align-center flex-wrap gap-sm">
                         <div class="d-flex gap-sm align-center">
-                            <span style="font-size: 0.8rem; color: var(--gray-400);">Quick Select:</span>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="selectTopVortex(3)" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Top 3</button>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="clearVortexAdvanceSelection()" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Clear All</button>
+                            <span style="font-size: 0.82rem; font-weight: 600; color: var(--gray-700);">Quick Select:</span>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="selectTopVortex(3)" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--purple-800); border-color: var(--purple-800); font-weight: 600;">Top 3</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="clearVortexAdvanceSelection()" style="font-size: 0.75rem; padding: 0.25rem 0.55rem; color: var(--gray-600); border-color: var(--gray-400);">Clear All</button>
                         </div>
                         <div class="d-flex gap-sm">
-                            <button type="button" class="btn btn-primary btn-sm" onclick="submitVortexAdvance()" style="font-weight: 600; background: #7c3aed; border-color: #6d28d9;">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="submitVortexAdvance()" style="font-weight: 600; background: var(--purple-700); border-color: var(--purple-800); padding: 0.4rem 0.9rem;">
                                 Confirm &amp; Advance Finalists
                             </button>
-                            <button type="button" class="btn btn-outline btn-sm" onclick="closeVortexAdvanceModal()">Cancel</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="closeVortexAdvanceModal()" style="padding: 0.4rem 0.8rem; color: var(--gray-700); border-color: var(--gray-400);">Cancel</button>
                         </div>
                     </div>
                 </form>
@@ -876,32 +904,32 @@
     <!-- Confirmation Modal: Team Elimination                         -->
     <!-- ============================================================ -->
     <div id="singleEliminationModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.78); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);" role="dialog" aria-labelledby="elimModalTitle" aria-modal="true">
-        <div class="glass-panel" style="max-width: 520px; width: 92%; background: #16192b; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 12px; padding: 2rem; box-shadow: 0 12px 48px rgba(0,0,0,0.6);">
-            <div class="d-flex justify-between align-center mb-2">
-                <h3 id="elimModalTitle" style="margin: 0; color: #ef4444; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+        <div class="glass-panel" style="max-width: 520px; width: 92%; background: #ffffff; border: 2px solid #ef4444; border-radius: 12px; padding: 2rem; box-shadow: 0 16px 48px rgba(0,0,0,0.4);">
+            <div class="d-flex justify-between align-center mb-2" style="border-bottom: 1px solid var(--gray-200); padding-bottom: 0.75rem;">
+                <h3 id="elimModalTitle" style="margin: 0; color: #dc2626; font-size: 1.25rem; font-family: var(--font-display); display: flex; align-items: center; gap: 0.5rem;">
                     <span>&#9888;</span> Confirm Team Elimination
                 </h3>
-                <button type="button" class="btn btn-outline btn-sm" onclick="closeEliminationModal()" aria-label="Close dialog" style="font-size: 1.3rem; line-height: 1; padding: 0.2rem 0.6rem; color: #fff;">&times;</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeEliminationModal()" aria-label="Close dialog" style="font-size: 1.3rem; line-height: 1; padding: 0.2rem 0.6rem; color: var(--gray-700); border-color: var(--gray-400);">&times;</button>
             </div>
 
-            <p style="margin: 0 0 1.25rem 0; font-size: 0.9rem; color: var(--gray-300); line-height: 1.5;">
+            <p style="margin: 0 0 1.25rem 0; font-size: 0.9rem; color: var(--gray-700); line-height: 1.5;">
                 Are you sure you want to eliminate this team? They will no longer be eligible or scored for subsequent rounds.
             </p>
 
             <!-- Team Details -->
-            <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+            <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
                 <div style="display: grid; grid-template-columns: 100px 1fr; gap: 0.5rem; font-size: 0.85rem; align-items: baseline;">
-                    <span style="color: var(--gray-400);">Team Code:</span>
-                    <strong style="color: var(--purple-300); font-family: var(--font-display); font-size: 0.95rem;" id="elimModalUniqueId"></strong>
+                    <span style="color: var(--gray-600);">Team Code:</span>
+                    <strong style="color: var(--purple-800); font-family: var(--font-display); font-size: 0.95rem;" id="elimModalUniqueId"></strong>
 
-                    <span style="color: var(--gray-400);">College:</span>
-                    <span style="color: #ffffff; font-weight: 600;" id="elimModalCollege"></span>
+                    <span style="color: var(--gray-600);">College:</span>
+                    <span style="color: #111111; font-weight: 600;" id="elimModalCollege"></span>
 
-                    <span style="color: var(--gray-400);">Team Lead:</span>
-                    <span style="color: var(--gray-200);" id="elimModalLead"></span>
+                    <span style="color: var(--gray-600);">Team Lead:</span>
+                    <span style="color: #444444; font-weight: 500;" id="elimModalLead"></span>
 
-                    <span style="color: var(--gray-400);">Event:</span>
-                    <span style="color: var(--gold-400); font-weight: 600;" id="elimModalQuiz"></span>
+                    <span style="color: var(--gray-600);">Event:</span>
+                    <span style="color: var(--gold-700); font-weight: 700;" id="elimModalQuiz"></span>
                 </div>
             </div>
 
@@ -912,7 +940,7 @@
                 <input type="hidden" name="action" value="eliminate">
 
                 <div class="d-flex justify-end gap-sm">
-                    <button type="button" class="btn btn-outline" id="btn-cancel-elim" onclick="closeEliminationModal()">
+                    <button type="button" class="btn btn-outline" id="btn-cancel-elim" onclick="closeEliminationModal()" style="color: var(--gray-700); border-color: var(--gray-400);">
                         Cancel
                     </button>
                     <button type="button" class="btn btn-danger" id="btn-confirm-elim" onclick="submitSingleElimination()" style="font-weight: 600;">
@@ -927,32 +955,32 @@
     <!-- Confirmation Modal: Team Removal (Deletion)                  -->
     <!-- ============================================================ -->
     <div id="singleRemoveTeamModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.78); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);" role="dialog" aria-labelledby="removeModalTitle" aria-modal="true">
-        <div class="glass-panel" style="max-width: 520px; width: 92%; background: #16192b; border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 12px; padding: 2rem; box-shadow: 0 12px 48px rgba(0,0,0,0.6);">
-            <div class="d-flex justify-between align-center mb-2">
-                <h3 id="removeModalTitle" style="margin: 0; color: #ef4444; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+        <div class="glass-panel" style="max-width: 520px; width: 92%; background: #ffffff; border: 2px solid #ef4444; border-radius: 12px; padding: 2rem; box-shadow: 0 16px 48px rgba(0,0,0,0.4);">
+            <div class="d-flex justify-between align-center mb-2" style="border-bottom: 1px solid var(--gray-200); padding-bottom: 0.75rem;">
+                <h3 id="removeModalTitle" style="margin: 0; color: #dc2626; font-size: 1.25rem; font-family: var(--font-display); display: flex; align-items: center; gap: 0.5rem;">
                     <span>&#9888;</span> Confirm Team Removal
                 </h3>
-                <button type="button" class="btn btn-outline btn-sm" onclick="closeRemoveTeamModal()" aria-label="Close dialog" style="font-size: 1.3rem; line-height: 1; padding: 0.2rem 0.6rem; color: #fff;">&times;</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeRemoveTeamModal()" aria-label="Close dialog" style="font-size: 1.3rem; line-height: 1; padding: 0.2rem 0.6rem; color: var(--gray-700); border-color: var(--gray-400);">&times;</button>
             </div>
 
-            <p style="margin: 0 0 1.25rem 0; font-size: 0.9rem; color: var(--gray-300); line-height: 1.5;">
-                Are you sure you want to permanently remove this team? <span style="color: #ef4444; font-weight: 600;">This cannot be undone.</span> All registered scores, sessions, and records for this team will be wiped.
+            <p style="margin: 0 0 1.25rem 0; font-size: 0.9rem; color: var(--gray-700); line-height: 1.5;">
+                Are you sure you want to permanently remove this team? <strong style="color: #dc2626;">This cannot be undone.</strong> All registered scores, sessions, and records for this team will be wiped.
             </p>
 
             <!-- Team Details -->
-            <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+            <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
                 <div style="display: grid; grid-template-columns: 100px 1fr; gap: 0.5rem; font-size: 0.85rem; align-items: baseline;">
-                    <span style="color: var(--gray-400);">Team Code:</span>
-                    <strong style="color: var(--purple-300); font-family: var(--font-display); font-size: 0.95rem;" id="removeModalUniqueId"></strong>
+                    <span style="color: var(--gray-600);">Team Code:</span>
+                    <strong style="color: var(--purple-800); font-family: var(--font-display); font-size: 0.95rem;" id="removeModalUniqueId"></strong>
 
-                    <span style="color: var(--gray-400);">College:</span>
-                    <span style="color: #ffffff; font-weight: 600;" id="removeModalCollege"></span>
+                    <span style="color: var(--gray-600);">College:</span>
+                    <span style="color: #111111; font-weight: 600;" id="removeModalCollege"></span>
 
-                    <span style="color: var(--gray-400);">Team Lead:</span>
-                    <span style="color: var(--gray-200);" id="removeModalLead"></span>
+                    <span style="color: var(--gray-600);">Team Lead:</span>
+                    <span style="color: #444444; font-weight: 500;" id="removeModalLead"></span>
 
-                    <span style="color: var(--gray-400);">Event:</span>
-                    <span style="color: var(--gold-400); font-weight: 600;" id="removeModalQuiz"></span>
+                    <span style="color: var(--gray-600);">Event:</span>
+                    <span style="color: var(--gold-700); font-weight: 700;" id="removeModalQuiz"></span>
                 </div>
             </div>
 
@@ -962,7 +990,7 @@
                 <input type="hidden" name="quizCode" id="removeFormQuizCode" value="">
 
                 <div class="d-flex justify-end gap-sm">
-                    <button type="button" class="btn btn-outline" id="btn-cancel-remove" onclick="closeRemoveTeamModal()">
+                    <button type="button" class="btn btn-outline" id="btn-cancel-remove" onclick="closeRemoveTeamModal()" style="color: var(--gray-700); border-color: var(--gray-400);">
                         Cancel
                     </button>
                     <button type="button" class="btn btn-danger" id="btn-confirm-remove" onclick="submitSingleRemove()" style="font-weight: 600;">

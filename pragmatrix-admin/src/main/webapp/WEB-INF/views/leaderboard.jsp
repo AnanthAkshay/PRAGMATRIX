@@ -100,7 +100,7 @@
                     </thead>
                     <tbody id="leaderboard-tbody">
                         <c:forEach var="entry" items="${entries}" varStatus="status">
-                            <c:set var="rank" value="${status.index + 1}"/>
+                            <c:set var="rank" value="${entry.rank > 0 ? entry.rank : (status.index + 1)}"/>
                             <tr class="<c:choose><c:when test='${rank == 1}'>rank-1</c:when><c:when test='${rank == 2}'>rank-2</c:when><c:when test='${rank == 3}'>rank-3</c:when></c:choose>">
                                 <td>
                                     <c:choose>
@@ -109,6 +109,9 @@
                                         <c:when test="${rank == 3}"><span class="rank-badge bronze">3</span></c:when>
                                         <c:otherwise><span class="rank-badge default">${rank}</span></c:otherwise>
                                     </c:choose>
+                                    <c:if test="${entry.tied}">
+                                        <span class="badge" style="background: #f59e0b; color: #000000; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.35rem; border-radius: 3px; margin-left: 0.25rem; vertical-align: middle;">TIED</span>
+                                    </c:if>
                                 </td>
                                 <td><strong style="color: var(--purple-700);"><c:out value="${entry.uniqueId}"/></strong></td>
                                 <td><c:out value="${entry.collegeName}"/></td>
@@ -166,20 +169,27 @@
 
         function refreshLeaderboard() {
             fetch(baseUrl + '?quiz=' + quizCode + '&format=json')
-                .then(function(res) { return res.json(); })
+                .then(function(res) {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.json();
+                })
                 .then(function(data) {
                     var tbody = document.getElementById('leaderboard-tbody');
-                    if (!data.entries || data.entries.length === 0) return;
+                    if (!tbody || !data || !data.entries || data.entries.length === 0) return;
 
                     var html = '';
                     data.entries.forEach(function(entry, index) {
-                        var rank = index + 1;
+                        var rank = entry.rank || (index + 1);
                         var rankClass = rank <= 3 ? 'rank-' + rank : '';
                         var rankBadge = '';
                         if (rank === 1) rankBadge = '<span class="rank-badge gold">1</span>';
                         else if (rank === 2) rankBadge = '<span class="rank-badge silver">2</span>';
                         else if (rank === 3) rankBadge = '<span class="rank-badge bronze">3</span>';
                         else rankBadge = '<span class="rank-badge default">' + rank + '</span>';
+
+                        if (entry.tied) {
+                            rankBadge += ' <span class="badge" style="background: #f59e0b; color: #000000; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.35rem; border-radius: 3px; margin-left: 0.25rem; vertical-align: middle;">TIED</span>';
+                        }
 
                         var leadName = entry.teamLeadName || '';
 
@@ -202,7 +212,7 @@
                             });
                         }
 
-                        var total = entry.totalPoints || 0;
+                        var total = entry.totalPoints != null ? entry.totalPoints : 0;
                         html += '<td style="text-align:center;background:rgba(212,175,55,0.08);">';
                         html += '<strong style="color:var(--gold-700);font-size:1.05rem;">' + parseFloat(total).toFixed(2) + '</strong>';
                         html += '</td></tr>';

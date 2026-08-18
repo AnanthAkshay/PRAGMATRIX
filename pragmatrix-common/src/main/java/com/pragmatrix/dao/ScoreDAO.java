@@ -123,13 +123,13 @@ public class ScoreDAO {
         Map<String, LeaderboardEntry> entryMap = new LinkedHashMap<>();
 
         // Query 1: Get leaderboard totals directly
-        String sql1 = "SELECT t.unique_id, t.college_name, t.team_lead_name, t.quiz_code, "
+        String sql1 = "SELECT t.unique_id, t.college_name, t.team_lead_name, t.quiz_code, t.is_eliminated, t.advanced_to_finale, "
                     + "COALESCE(SUM(CASE WHEN r.is_finished = TRUE THEN s.points ELSE 0 END), 0) AS total_points "
                     + "FROM teams t "
                     + "LEFT JOIN scores s ON t.unique_id = s.unique_id "
                     + "LEFT JOIN rounds r ON s.round_id = r.round_id "
                     + "WHERE t.quiz_code = ? "
-                    + "GROUP BY t.unique_id, t.college_name, t.team_lead_name, t.quiz_code "
+                    + "GROUP BY t.unique_id, t.college_name, t.team_lead_name, t.quiz_code, t.is_eliminated, t.advanced_to_finale "
                     + "ORDER BY total_points DESC, t.unique_id ASC";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql1)) {
@@ -141,6 +141,8 @@ public class ScoreDAO {
                     e.setCollegeName(rs.getString("college_name"));
                     e.setTeamLeadName(rs.getString("team_lead_name"));
                     e.setQuizCode(rs.getString("quiz_code"));
+                    e.setEliminated(rs.getBoolean("is_eliminated"));
+                    e.setAdvanced(rs.getBoolean("advanced_to_finale"));
                     e.setTotalPoints(rs.getDouble("total_points"));
                     entryMap.put(e.getUniqueId(), e);
                 }
