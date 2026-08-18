@@ -19,10 +19,10 @@ import java.util.List;
  * 1. svs262003@gmail.com
  * 2. ananthakshay2006@gmail.com
  *
- * GET  /login -> display admin email login form
- * POST /login -> validate email, generate 6-digit OTP, send email, forward to OTP verification
+ * GET  /login, /admin/login -> display admin email login form (Page 2)
+ * POST /login, /admin/login -> validate email, generate 6-digit OTP, send email, forward to OTP verification
  */
-@WebServlet(name = "AdminLoginServlet", urlPatterns = {"/login"})
+@WebServlet(name = "AdminLoginServlet", urlPatterns = {"/login", "/admin/login"})
 public class AdminLoginServlet extends HttpServlet {
 
     private static final List<String> AUTHORIZED_ADMIN_EMAILS = Arrays.asList(
@@ -93,10 +93,10 @@ public class AdminLoginServlet extends HttpServlet {
         session.setAttribute("admin_otp_expiry", expiryTime);
         session.setAttribute("admin_otp_last_sent", now);
 
-        // 4. Send OTP email via SMTP
+        // 4. Send OTP email via Brevo / SMTP
         boolean sent = EmailService.sendAdminOtpEmail(email, otpCode);
         if (!sent) {
-            System.err.println("[ADMIN-LOGIN] Warning: Email failed to send via SMTP. Generated OTP: " + otpCode);
+            System.err.println("[ADMIN-LOGIN] Warning: Email failed to send via Brevo/SMTP. Generated OTP: " + otpCode);
             req.setAttribute("emailWarning", true);
         } else {
             req.setAttribute("message", "A 6-digit OTP has been sent to " + email + ". It will expire in 5 minutes.");

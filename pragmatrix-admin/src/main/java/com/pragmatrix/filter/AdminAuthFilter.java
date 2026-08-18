@@ -9,8 +9,10 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 
 /**
- * Authentication filter that guards all admin routes.
- * Checks for a valid admin session; redirects to login page if absent.
+ * Authentication filter that guards protected admin routes.
+ * Whitelists the public landing page (/admin, /admin/) and auth routes (/admin/login, /admin/otp-verify).
+ * For protected routes (/admin/dashboard, /admin/scores, etc.), checks for a valid admin session
+ * and redirects unauthenticated users to the admin login page.
  */
 @WebFilter(urlPatterns = {"/admin/*"})
 public class AdminAuthFilter implements Filter {
@@ -26,6 +28,18 @@ public class AdminAuthFilter implements Filter {
 
         HttpServletRequest httpReq = (HttpServletRequest) request;
         HttpServletResponse httpResp = (HttpServletResponse) response;
+
+        String path = httpReq.getServletPath();
+        if (path == null) {
+            path = "";
+        }
+
+        // Whitelist public landing page and login/verify endpoints under /admin
+        if ("/admin".equals(path) || "/admin/".equals(path)
+                || "/admin/login".equals(path) || "/admin/otp-verify".equals(path)) {
+            chain.doFilter(request, response);
+            return;
+        }
 
         HttpSession session = httpReq.getSession(false);
 

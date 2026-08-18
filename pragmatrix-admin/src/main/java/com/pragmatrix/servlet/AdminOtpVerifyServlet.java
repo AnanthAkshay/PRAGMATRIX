@@ -16,16 +16,24 @@ import java.security.SecureRandom;
 /**
  * Handles admin OTP verification and resend requests.
  *
- * GET  /admin-otp-verify → display OTP verification form if pending email exists
- * POST /admin-otp-verify → verify OTP code or handle resend
+ * GET  /admin-otp-verify, /admin/otp-verify → display OTP verification form if pending email exists
+ * POST /admin-otp-verify, /admin/otp-verify → verify OTP code or handle resend
  */
-@WebServlet(name = "AdminOtpVerifyServlet", urlPatterns = {"/admin-otp-verify"})
+@WebServlet(name = "AdminOtpVerifyServlet", urlPatterns = {"/admin-otp-verify", "/admin/otp-verify"})
 public class AdminOtpVerifyServlet extends HttpServlet {
 
-    private final AdminDAO adminDAO = new AdminDAO();
+    private final AdminDAO adminDAO;
     private static final long OTP_EXPIRY_MS = 5 * 60 * 1000L; // 5 minutes
     private static final long RATE_LIMIT_MS = 30 * 1000L;     // 30 seconds
     private static final SecureRandom RANDOM = new SecureRandom();
+
+    public AdminOtpVerifyServlet() {
+        this(new AdminDAO());
+    }
+
+    public AdminOtpVerifyServlet(AdminDAO adminDAO) {
+        this.adminDAO = adminDAO;
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -72,7 +80,7 @@ public class AdminOtpVerifyServlet extends HttpServlet {
 
             boolean sent = EmailService.sendAdminOtpEmail(pendingEmail, newOtp);
             if (!sent) {
-                System.err.println("[ADMIN-OTP] Warning: Resend email failed via SMTP. Generated OTP: " + newOtp);
+                System.err.println("[ADMIN-OTP] Warning: Resend email failed via Brevo/SMTP. Generated OTP: " + newOtp);
                 req.setAttribute("emailWarning", true);
             } else {
                 req.setAttribute("message", "A new OTP has been sent to " + pendingEmail + ". It will expire in 5 minutes.");

@@ -8,14 +8,14 @@
     <display-name>PRAGMATRIX 2026 — Admin</display-name>
     <description>Admin dashboard app for PRAGMATRIX 2026</description>
 
-    <!-- Welcome file — admin login page -->
+    <!-- Welcome file — admin landing page -->
     <welcome-file-list>
-        <welcome-file>admin-login.jsp</welcome-file>
+        <welcome-file>index.jsp</welcome-file>
     </welcome-file-list>
 
-    <!-- Session timeout: 30 minutes -->
+    <!-- Session timeout: 60 minutes -->
     <session-config>
-        <session-timeout>30</session-timeout>
+        <session-timeout>60</session-timeout>
     </session-config>
 
     <!-- Error pages -->
