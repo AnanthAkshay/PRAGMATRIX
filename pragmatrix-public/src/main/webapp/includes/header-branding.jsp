@@ -19,7 +19,7 @@
         <div class="dept-block">
             <p class="dept-sub">POST GRADUATE DEPARTMENT OF</p>
             <p class="dept-main">BUSINESS ADMINISTRATION</p>
-            <p class="forum-line">Lakshya – Commerce And Management Forum</p>
+            <p class="forum-line">Lakshya – Management Forum</p>
         </div>
     </div>
 
