@@ -146,18 +146,27 @@ public class AppContextListener implements ServletContextListener {
     }
 
     /**
-     * Ensures VORTEX Round 4 is named "GRAND FINALE" in both vortex_rounds and rounds tables.
+     * Ensures VORTEX rounds follow the order: KAIROS (1) -> TREORAI (2) -> ENMA (3) -> GRAND FINALE (4)
+     * in both vortex_rounds and rounds tables.
      */
     private void ensureVortexRoundNames() {
-        String updateVortexRounds = "UPDATE vortex_rounds SET round_name = 'GRAND FINALE' WHERE display_order = 4 OR round_id = 4 OR round_name = 'Round 4' OR round_name = 'SLANCIO'";
-        String updateRounds = "UPDATE rounds SET round_name = 'GRAND FINALE' WHERE quiz_code = 'VORTEX' AND round_number = 4";
         try (java.sql.Connection conn = DBConnection.getConnection();
              java.sql.Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate(updateVortexRounds);
-            stmt.executeUpdate(updateRounds);
-            System.out.println("[PRAGMATRIX] VORTEX Round 4 name verified/updated to GRAND FINALE.");
+            // Update vortex_rounds display_order and names
+            stmt.executeUpdate("UPDATE vortex_rounds SET display_order = 1 WHERE round_name = 'KAIROS'");
+            stmt.executeUpdate("UPDATE vortex_rounds SET round_name = 'TREORAI', display_order = 2 WHERE round_name = 'TREORAI' OR round_name = 'THEORAI'");
+            stmt.executeUpdate("UPDATE vortex_rounds SET display_order = 3 WHERE round_name = 'ENMA'");
+            stmt.executeUpdate("UPDATE vortex_rounds SET round_name = 'GRAND FINALE', display_order = 4 WHERE round_name = 'GRAND FINALE' OR round_name = 'Round 4' OR round_name = 'SLANCIO' OR display_order = 4");
+
+            // Update master rounds table
+            stmt.executeUpdate("UPDATE rounds SET round_name = 'KAIROS' WHERE quiz_code = 'VORTEX' AND round_number = 1");
+            stmt.executeUpdate("UPDATE rounds SET round_name = 'TREORAI' WHERE quiz_code = 'VORTEX' AND round_number = 2");
+            stmt.executeUpdate("UPDATE rounds SET round_name = 'ENMA' WHERE quiz_code = 'VORTEX' AND round_number = 3");
+            stmt.executeUpdate("UPDATE rounds SET round_name = 'GRAND FINALE' WHERE quiz_code = 'VORTEX' AND round_number = 4");
+
+            System.out.println("[PRAGMATRIX] VORTEX rounds verified/updated to: KAIROS (1) -> TREORAI (2) -> ENMA (3) -> GRAND FINALE (4).");
         } catch (Exception e) {
-            System.err.println("[PRAGMATRIX] Note: Could not update VORTEX round names: " + e.getMessage());
+            System.err.println("[PRAGMATRIX] Note: Could not update VORTEX round names/order: " + e.getMessage());
         }
     }
 

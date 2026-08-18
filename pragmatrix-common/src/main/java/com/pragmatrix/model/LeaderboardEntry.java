@@ -18,6 +18,11 @@ public class LeaderboardEntry {
     /** Map of roundNumber → points for that round (null/missing means round not finished or no score). */
     private Map<Integer, Double> roundPoints = new LinkedHashMap<>();
 
+    private int rank;
+    private boolean tied;
+    private boolean eliminated;
+    private boolean advanced;
+
     public LeaderboardEntry() {}
 
     public String getUniqueId() { return uniqueId; }
@@ -34,6 +39,18 @@ public class LeaderboardEntry {
 
     public double getTotalPoints() { return totalPoints; }
     public void setTotalPoints(double totalPoints) { this.totalPoints = totalPoints; }
+
+    public int getRank() { return rank; }
+    public void setRank(int rank) { this.rank = rank; }
+
+    public boolean isTied() { return tied; }
+    public void setTied(boolean tied) { this.tied = tied; }
+
+    public boolean isEliminated() { return eliminated; }
+    public void setEliminated(boolean eliminated) { this.eliminated = eliminated; }
+
+    public boolean isAdvanced() { return advanced; }
+    public void setAdvanced(boolean advanced) { this.advanced = advanced; }
 
     public Map<Integer, Double> getRoundPoints() { return roundPoints; }
     public void setRoundPoints(Map<Integer, Double> roundPoints) { this.roundPoints = roundPoints; }

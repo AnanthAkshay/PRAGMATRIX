@@ -137,6 +137,16 @@
                         </div>
                     </div>
                 </c:if>
+                <c:if test="${team.quizCode == 'VORTEX' && team.advancedToFinale}">
+                    <div class="team-info-item" id="team-finalist-item">
+                        <div class="info-label">Status</div>
+                        <div class="info-value">
+                            <span class="badge" style="background: rgba(124, 58, 237, 0.15); color: #7c3aed; border: 1px solid rgba(124, 58, 237, 0.3); font-size: 0.85rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 700;">
+                                &#11088; GRAND FINALE Finalist (Top 3)
+                            </span>
+                        </div>
+                    </div>
+                </c:if>
             </div>
         </div>
 
@@ -187,6 +197,11 @@
                                 </td>
                                 <td>
                                     <c:choose>
+                                        <c:when test="${team.quizCode == 'VORTEX' && round.roundNumber == 4 && !team.advancedToFinale}">
+                                            <span class="status-badge" style="background: rgba(107, 114, 128, 0.1); color: var(--gray-500); border-color: rgba(107, 114, 128, 0.2);">
+                                                <span class="status-dot" style="background: var(--gray-400);"></span> Not Advanced
+                                            </span>
+                                        </c:when>
                                         <c:when test="${round.finished}">
                                             <span class="status-badge finished">
                                                 <span class="status-dot active"></span> Finished
@@ -201,6 +216,11 @@
                                 </td>
                                 <td>
                                     <c:choose>
+                                        <c:when test="${team.quizCode == 'VORTEX' && round.roundNumber == 4 && !team.advancedToFinale}">
+                                            <span class="badge" style="background: rgba(107, 114, 128, 0.12); color: var(--gray-500); font-size: 0.8rem; padding: 0.2rem 0.5rem; border-radius: 4px;">
+                                                Not Advanced
+                                            </span>
+                                        </c:when>
                                         <c:when test="${round.finished && hasScore}">
                                             <strong style="color: var(--gold-700); font-size: 1.1rem;">
                                                 <c:out value="${roundScore.points}"/>
@@ -225,7 +245,10 @@
                                             <button type="button" class="btn btn-sm btn-outline"
                                                     onclick="openCriteriaModal(${round.roundNumber})"
                                                     style="color: var(--purple-700); border-color: var(--purple-600); padding: 0.25rem 0.6rem; font-size: 0.8rem;">
-                                                View Judging Criteria
+                                                <c:choose>
+                                                    <c:when test="${round.roundNumber == 4 && !team.advancedToFinale}">View Status &amp; Criteria</c:when>
+                                                    <c:otherwise>View Judging Criteria</c:otherwise>
+                                                </c:choose>
                                             </button>
                                         </c:when>
                                         <c:otherwise>
@@ -296,6 +319,18 @@
                          data-total-points="<c:choose><c:when test='${not empty rScore && not empty rScore.points}'><c:out value='${rScore.points}'/></c:when><c:otherwise>0.00</c:otherwise></c:choose>"
                          data-max-marks="${not empty vRound ? vRound.totalMaxMarks : ''}"
                          style="display: none;">
+
+                        <c:if test="${team.quizCode == 'VORTEX' && round.roundNumber == 4 && !team.advancedToFinale}">
+                            <div class="alert alert-info" style="margin-bottom: 1.25rem; background: rgba(124, 58, 237, 0.08); border: 1px solid rgba(124, 58, 237, 0.3); color: #7c3aed; display: flex; align-items: flex-start; gap: 0.75rem; border-radius: 8px; padding: 0.85rem 1rem;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                <div>
+                                    <strong style="font-size: 0.95rem;">Not Advanced to GRAND FINALE</strong>
+                                    <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--gray-600); line-height: 1.4;">
+                                        Your team did not advance to the Top 3 GRAND FINALE based on cumulative scores across KAIROS, TREORAI, and ENMA. The round's judging criteria is displayed below for your reference.
+                                    </p>
+                                </div>
+                            </div>
+                        </c:if>
 
                         <c:choose>
                             <c:when test="${team.quizCode == 'VORTEX' && not empty vRound && not empty vRound.components}">
@@ -591,19 +626,34 @@
                     var rows = '';
                     for (var i = 0; i < data.rounds.length; i++) {
                         var r = data.rounds[i];
-                        var statusBadge = r.isFinished
-                            ? '<span class="status-badge finished"><span class="status-dot active"></span> Finished</span>'
-                            : '<span class="status-badge pending"><span class="status-dot pending"></span> In Progress</span>';
-                        var pointsDisplay = (r.isFinished && r.points !== null)
-                            ? '<strong style="color: var(--gold-700); font-size: 1.1rem;">' + r.points + '</strong>'
-                            : '<span class="score-pending">Pending</span>';
+                        var isNotAdvancedVortex = isVortex && r.roundNumber === 4 && !data.advancedToFinale;
+                        
+                        var statusBadge = '';
+                        if (isNotAdvancedVortex) {
+                            statusBadge = '<span class="status-badge" style="background: rgba(107, 114, 128, 0.1); color: var(--gray-500); border-color: rgba(107, 114, 128, 0.2);"><span class="status-dot" style="background: var(--gray-400);"></span> Not Advanced</span>';
+                        } else if (r.isFinished) {
+                            statusBadge = '<span class="status-badge finished"><span class="status-dot active"></span> Finished</span>';
+                        } else {
+                            statusBadge = '<span class="status-badge pending"><span class="status-dot pending"></span> In Progress</span>';
+                        }
+
+                        var pointsDisplay = '';
+                        if (isNotAdvancedVortex) {
+                            pointsDisplay = '<span class="badge" style="background: rgba(107, 114, 128, 0.12); color: var(--gray-500); font-size: 0.8rem; padding: 0.2rem 0.5rem; border-radius: 4px;">Not Advanced</span>';
+                        } else if (r.isFinished && r.points !== null) {
+                            pointsDisplay = '<strong style="color: var(--gold-700); font-size: 1.1rem;">' + r.points + '</strong>';
+                        } else {
+                            pointsDisplay = '<span class="score-pending">Pending</span>';
+                        }
+
                         var criteria = r.judgingCriteria || '\u2014';
 
                         var actionButton = '';
                         if (r.hasScore || (r.isFinished && r.points !== null)) {
                             actionButton = '<button type="button" class="btn btn-sm btn-primary" onclick="openScoresheetModal(' + r.roundNumber + ')" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>View Scoresheet</button>';
                         } else if (isVortex) {
-                            actionButton = '<button type="button" class="btn btn-sm btn-outline" onclick="openCriteriaModal(' + r.roundNumber + ')" style="color: var(--purple-700); border-color: var(--purple-600); padding: 0.25rem 0.6rem; font-size: 0.8rem;">View Judging Criteria</button>';
+                            var btnLabel = isNotAdvancedVortex ? 'View Status & Criteria' : 'View Judging Criteria';
+                            actionButton = '<button type="button" class="btn btn-sm btn-outline" onclick="openCriteriaModal(' + r.roundNumber + ')" style="color: var(--purple-700); border-color: var(--purple-600); padding: 0.25rem 0.6rem; font-size: 0.8rem;">' + btnLabel + '</button>';
                         } else {
                             actionButton = '<span class="score-pending" style="font-size: 0.85rem;">Not yet scored</span>';
                         }

@@ -54,6 +54,28 @@ public class VortexCriteriaDAO {
         return null;
     }
 
+    public VortexRound getRoundByDisplayOrder(int displayOrder) {
+        String sql = "SELECT * FROM vortex_rounds WHERE display_order = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, displayOrder);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    VortexRound round = new VortexRound(
+                            rs.getInt("round_id"),
+                            rs.getString("round_name"),
+                            rs.getInt("display_order")
+                    );
+                    round.setComponents(getComponentsForRound(round.getRoundId(), conn));
+                    return round;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public VortexRound getRoundByName(String roundName) {
         String sql = "SELECT * FROM vortex_rounds WHERE LOWER(round_name) = LOWER(?)";
         try (Connection conn = DBConnection.getConnection();

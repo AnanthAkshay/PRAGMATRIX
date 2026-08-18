@@ -60,6 +60,14 @@ public class ScoreEntryServlet extends HttpServlet {
                     }
                 }
                 teams = eligibleTeams;
+            } else if ("VORTEX".equalsIgnoreCase(round.getQuizCode()) && round.getRoundNumber() == 4) {
+                List<Team> eligibleTeams = new ArrayList<>();
+                for (Team t : teams) {
+                    if (t.isAdvancedToFinale() || existingScores.containsKey(t.getUniqueId())) {
+                        eligibleTeams.add(t);
+                    }
+                }
+                teams = eligibleTeams;
             }
 
             req.setAttribute("round", round);
@@ -69,7 +77,9 @@ public class ScoreEntryServlet extends HttpServlet {
             if ("VORTEX".equalsIgnoreCase(round.getQuizCode())) {
                 VortexRound vortexRound = vortexDAO.getRoundByName(round.getRoundName());
                 if (vortexRound == null) {
-                    // Fallback search by display_order / round_number
+                    vortexRound = vortexDAO.getRoundByDisplayOrder(round.getRoundNumber());
+                }
+                if (vortexRound == null) {
                     vortexRound = vortexDAO.getRoundById(round.getRoundNumber());
                 }
                 req.setAttribute("vortexRound", vortexRound);
@@ -127,11 +137,17 @@ public class ScoreEntryServlet extends HttpServlet {
             if ("VORTEX".equalsIgnoreCase(round.getQuizCode())) {
                 VortexRound vortexRound = vortexDAO.getRoundByName(round.getRoundName());
                 if (vortexRound == null) {
+                    vortexRound = vortexDAO.getRoundByDisplayOrder(round.getRoundNumber());
+                }
+                if (vortexRound == null) {
                     vortexRound = vortexDAO.getRoundById(round.getRoundNumber());
                 }
 
                 if (vortexRound != null && !vortexRound.getComponents().isEmpty()) {
                     for (Team team : teams) {
+                        if (round.getRoundNumber() == 4 && !team.isAdvancedToFinale()) {
+                            continue;
+                        }
                         Map<Integer, Double> critScores = new HashMap<>();
                         for (JudgingComponent comp : vortexRound.getComponents()) {
                             for (JudgingCriterion crit : comp.getCriteria()) {

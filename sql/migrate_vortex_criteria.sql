@@ -56,10 +56,10 @@ TRUNCATE TABLE judging_components;
 TRUNCATE TABLE vortex_rounds;
 SET FOREIGN_KEY_CHECKS = 1;
 
--- Insert 4 VORTEX Rounds
+-- Insert 4 VORTEX Rounds with KAIROS (1), TREORAI (2), ENMA (3), GRAND FINALE (4)
 INSERT INTO vortex_rounds (round_id, round_name, display_order) VALUES
-(1, 'TREORAI', 1),
-(2, 'KAIROS', 2),
+(1, 'TREORAI', 2),
+(2, 'KAIROS', 1),
 (3, 'ENMA', 3),
 (4, 'GRAND FINALE', 4);
 

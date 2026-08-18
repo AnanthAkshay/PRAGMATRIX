@@ -91,6 +91,7 @@ public class TeamScoreStatusServlet extends HttpServlet {
             result.put("rounds", roundData);
             result.put("totalPoints", totalPoints);
             result.put("isEliminated", team.isEliminated());
+            result.put("advancedToFinale", team.isAdvancedToFinale());
             result.put("lastUpdated", System.currentTimeMillis());
 
             resp.setContentType("application/json");

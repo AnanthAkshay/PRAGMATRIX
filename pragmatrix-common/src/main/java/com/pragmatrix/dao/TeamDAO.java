@@ -230,19 +230,42 @@ public class TeamDAO {
     }
 
     /**
-     * Update finale advancement flag for multiple teams.
+     * Atomically sets the advanced_to_finale flag for selected teams in a quiz,
+     * resetting all other teams in the quiz to false.
      */
-    public void updateFinaleAdvancementBatch(List<String> uniqueIds, boolean advanced) throws SQLException {
-        if (uniqueIds == null || uniqueIds.isEmpty()) return;
-        String sql = "UPDATE teams SET advanced_to_finale = ? WHERE unique_id = ?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (String uid : uniqueIds) {
-                ps.setBoolean(1, advanced);
-                ps.setString(2, uid);
-                ps.addBatch();
+    public void setGrandFinaleAdvancement(String quizCode, List<String> advancedUniqueIds) throws SQLException {
+        String resetSql = "UPDATE teams SET advanced_to_finale = FALSE WHERE quiz_code = ?";
+        String advanceSql = "UPDATE teams SET advanced_to_finale = TRUE WHERE unique_id = ?";
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false);
+            try (PreparedStatement psReset = conn.prepareStatement(resetSql)) {
+                psReset.setString(1, quizCode);
+                psReset.executeUpdate();
             }
-            ps.executeBatch();
+            if (advancedUniqueIds != null && !advancedUniqueIds.isEmpty()) {
+                try (PreparedStatement psAdvance = conn.prepareStatement(advanceSql)) {
+                    for (String id : advancedUniqueIds) {
+                        if (id != null && !id.trim().isEmpty()) {
+                            psAdvance.setString(1, id.trim());
+                            psAdvance.addBatch();
+                        }
+                    }
+                    psAdvance.executeBatch();
+                }
+            }
+            conn.commit();
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ignored) {}
+            }
+            throw e;
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+                try { conn.close(); } catch (SQLException ignored) {}
+            }
         }
     }
 

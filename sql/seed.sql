@@ -17,7 +17,7 @@ ON DUPLICATE KEY UPDATE quiz_name = VALUES(quiz_name);
 -- ------------------------------------------------------------
 INSERT INTO rounds (quiz_code, round_number, round_name, judging_criteria) VALUES
     ('VORTEX', 1, 'KAIROS',       ''),
-    ('VORTEX', 2, 'THEORAI',      ''),
+    ('VORTEX', 2, 'TREORAI',      ''),
     ('VORTEX', 3, 'ENMA',         ''),
     ('VORTEX', 4, 'GRAND FINALE', '')
 ON DUPLICATE KEY UPDATE round_name = VALUES(round_name);

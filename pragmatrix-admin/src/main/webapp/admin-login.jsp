@@ -34,7 +34,6 @@
 
             <form action="${pageContext.request.contextPath}/login" method="POST" id="login-form" novalidate>
                 <div class="form-group">
-                    <span>* indicated mandatory fields</span>
                     <label for="email" class="form-label">Email Address <span class="required">*</span></label>
                     <input type="email" name="email" id="email" class="form-control"
                            placeholder="Enter your email"

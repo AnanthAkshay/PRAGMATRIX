@@ -41,7 +41,13 @@ public class ManageCriteriaServlet extends HttpServlet {
             } catch (NumberFormatException ignored) {}
         }
 
-        VortexRound currentRound = dao.getRoundById(selectedRoundId);
+        VortexRound currentRound = null;
+        if (roundIdParam != null && !roundIdParam.trim().isEmpty()) {
+            currentRound = dao.getRoundById(selectedRoundId);
+            if (currentRound == null) {
+                currentRound = dao.getRoundByDisplayOrder(selectedRoundId);
+            }
+        }
         if (currentRound == null && !rounds.isEmpty()) {
             currentRound = rounds.get(0);
         }

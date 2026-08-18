@@ -130,15 +130,15 @@
                                         <table class="themed-table">
                                             <thead>
                                                 <tr>
-                                                    <th style="width: 40%;">Criterion</th>
-                                                    <th style="width: 40%;">Judges Look For</th>
-                                                    <th style="width: 10%; text-align: center;">Max</th>
-                                                    <th style="width: 10%; text-align: center;">Score</th>
+                                                    <th>Criterion</th>
+                                                    <th>Judges Look For</th>
+                                                    <th style="width: 80px; text-align: center;">Max</th>
+                                                    <th style="width: 130px; text-align: center;">Score</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <c:forEach var="crit" items="${comp.criteria}">
-                                                    <c:set var="cVal" value="${tScores[crit.criterionId]}"/>
+                                                    <c:set var="scoreVal" value="${tScores[crit.criterionId]}"/>
                                                     <tr>
                                                         <td><strong><c:out value="${crit.criterionName}"/></strong></td>
                                                         <td style="color: var(--gray-600); font-style: italic; font-size: 0.85rem;">
@@ -150,14 +150,14 @@
                                                             </c:choose>
                                                         </td>
                                                         <td style="text-align: center;"><strong style="color: var(--gold-700);">${crit.maxMarks}</strong></td>
-                                                        <td style="text-align: center;">
+                                                        <td>
                                                             <input type="number"
                                                                    name="score_${team.uniqueId}_${crit.criterionId}"
-                                                                   class="form-control crit-input score-field-${team.uniqueId}"
+                                                                   class="form-control score-input score-field-${team.uniqueId}"
                                                                    data-team="${team.uniqueId}"
                                                                    data-max="${crit.maxMarks}"
                                                                    step="0.5" min="0" max="${crit.maxMarks}"
-                                                                   value="<c:out value='${cVal}'/>"
+                                                                   value="<c:out value='${scoreVal}'/>"
                                                                    placeholder="0"
                                                                    <c:if test="${round.finished}">disabled</c:if>>
                                                         </td>
@@ -170,6 +170,30 @@
                             </c:forEach>
                         </div>
                     </c:forEach>
+
+                    <c:if test="${empty teams}">
+                        <div class="glass-panel text-center" style="padding: 3rem;">
+                            <h3 style="color: var(--gray-700); font-family: var(--font-display);">
+                                <c:choose>
+                                    <c:when test="${round.roundNumber == 4}">No Teams Advanced to GRAND FINALE</c:when>
+                                    <c:otherwise>No Registered Teams Found</c:otherwise>
+                                </c:choose>
+                            </h3>
+                            <p style="color: var(--gray-600); margin-bottom: 1.5rem;">
+                                <c:choose>
+                                    <c:when test="${round.roundNumber == 4}">
+                                        Advance the top 3 teams based on cumulative standings after Round 3 (ENMA) from the VORTEX Admin Dashboard.
+                                    </c:when>
+                                    <c:otherwise>
+                                        There are no teams registered for VORTEX yet.
+                                    </c:otherwise>
+                                </c:choose>
+                            </p>
+                            <a href="${pageContext.request.contextPath}/admin/dashboard?quiz=VORTEX" class="btn btn-primary">
+                                &larr; Return to Dashboard
+                            </a>
+                        </div>
+                    </c:if>
 
                 </c:when>
                 <c:when test="${round.quizCode == 'VORTEX'}">

@@ -46,7 +46,7 @@
                 <div class="info-card-icon">&#127942;</div>
                 <h3>Vortex</h3>
                 <div class="gold-ornament"></div>
-                <p>A whirlwind of applied management. Navigate through <strong>TREORAI, KAIROS, ENMA,</strong> and <strong>GRAND FINALE</strong> — four curated rounds pushing teams to their strategic limits.</p>
+                <p>A whirlwind of applied management. Navigate through <strong>KAIROS, TREORAI, ENMA,</strong> and <strong>GRAND FINALE</strong> — four curated rounds pushing teams to their strategic limits.</p>
             </div>
         </div>
     </section>
