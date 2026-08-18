@@ -33,10 +33,21 @@ import java.util.*;
 @WebServlet(name = "ExportScoresServlet", urlPatterns = {"/admin/export-scores"})
 public class ExportScoresServlet extends HttpServlet {
 
-    private final TeamDAO teamDAO = new TeamDAO();
-    private final RoundDAO roundDAO = new RoundDAO();
-    private final ScoreDAO scoreDAO = new ScoreDAO();
-    private final VortexCriteriaDAO vortexCriteriaDAO = new VortexCriteriaDAO();
+    private final TeamDAO teamDAO;
+    private final RoundDAO roundDAO;
+    private final ScoreDAO scoreDAO;
+    private final VortexCriteriaDAO vortexCriteriaDAO;
+
+    public ExportScoresServlet() {
+        this(new TeamDAO(), new RoundDAO(), new ScoreDAO(), new VortexCriteriaDAO());
+    }
+
+    public ExportScoresServlet(TeamDAO teamDAO, RoundDAO roundDAO, ScoreDAO scoreDAO, VortexCriteriaDAO vortexCriteriaDAO) {
+        this.teamDAO = teamDAO;
+        this.roundDAO = roundDAO;
+        this.scoreDAO = scoreDAO;
+        this.vortexCriteriaDAO = vortexCriteriaDAO;
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -83,9 +94,21 @@ public class ExportScoresServlet extends HttpServlet {
     }
 
     /**
+     * Formats an optional team member name for Excel export.
+     * If the name is present and not blank, returns the trimmed name.
+     * If null, empty, or whitespace-only, returns exactly "NIL".
+     */
+    public static String formatMemberName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return "NIL";
+        }
+        return name.trim();
+    }
+
+    /**
      * Builds the Excel workbook for BIZWIZX.
      */
-    private void buildBizwizxWorkbook(XSSFWorkbook workbook) throws SQLException {
+    void buildBizwizxWorkbook(XSSFWorkbook workbook) throws SQLException {
         Sheet sheet = workbook.createSheet("BizWizX Scores");
         sheet.setDisplayGridlines(true);
 
@@ -110,7 +133,7 @@ public class ExportScoresServlet extends HttpServlet {
         CellStyle scoreStyleAlt = createScoreStyle(workbook, true);
         CellStyle totalStyle = createTotalStyle(workbook);
 
-        int totalColumns = 5 + rounds.size() + 1; // #, Code, College, Lead, Email, [Rounds...], Total
+        int totalColumns = 7 + rounds.size() + 1; // #, Code, College, Lead, Email, Member 2, Member 3, [Rounds...], Total
 
         // Title row
         Row titleRow = sheet.createRow(0);
@@ -142,6 +165,8 @@ public class ExportScoresServlet extends HttpServlet {
         createCell(headerRow, colIdx++, "College / Institution", headerStyle);
         createCell(headerRow, colIdx++, "Team Lead Name", headerStyle);
         createCell(headerRow, colIdx++, "Team Lead Email", headerStyle);
+        createCell(headerRow, colIdx++, "Member 2 Name", headerStyle);
+        createCell(headerRow, colIdx++, "Member 3 Name", headerStyle);
 
         for (Round r : rounds) {
             String roundLabel = "Round " + r.getRoundNumber() + (r.getRoundName() != null && !r.getRoundName().isEmpty() ? " (" + r.getRoundName() + ")" : "");
@@ -167,6 +192,8 @@ public class ExportScoresServlet extends HttpServlet {
             createCell(row, colIdx++, team.getCollegeName(), curData);
             createCell(row, colIdx++, team.getTeamLeadName(), curData);
             createCell(row, colIdx++, team.getLeadEmail(), curData);
+            createCell(row, colIdx++, formatMemberName(team.getMember2Name()), curData);
+            createCell(row, colIdx++, formatMemberName(team.getMember3Name()), curData);
 
             Map<Integer, Score> scores = teamScoreMap.getOrDefault(team.getUniqueId(), Collections.emptyMap());
             double total = 0;
@@ -192,7 +219,7 @@ public class ExportScoresServlet extends HttpServlet {
     /**
      * Builds the Excel workbook for VORTEX with master summary + individual round breakdown sheets.
      */
-    private void buildVortexWorkbook(XSSFWorkbook workbook) throws SQLException {
+    void buildVortexWorkbook(XSSFWorkbook workbook) throws SQLException {
         List<Team> teams = teamDAO.findByQuizCode("VORTEX");
         List<Round> masterRounds = roundDAO.findByQuizCode("VORTEX");
         List<VortexRound> vortexRounds = vortexCriteriaDAO.getAllRounds();
@@ -212,7 +239,7 @@ public class ExportScoresServlet extends HttpServlet {
         CellStyle scoreStyleAlt = createScoreStyle(workbook, true);
         CellStyle totalStyle = createTotalStyle(workbook);
 
-        int totalColumns = 5 + masterRounds.size() + 1;
+        int totalColumns = 7 + masterRounds.size() + 1;
 
         // Title row
         Row titleRow = summarySheet.createRow(0);
@@ -244,6 +271,8 @@ public class ExportScoresServlet extends HttpServlet {
         createCell(headerRow, colIdx++, "College / Institution", headerStyle);
         createCell(headerRow, colIdx++, "Team Lead Name", headerStyle);
         createCell(headerRow, colIdx++, "Team Lead Email", headerStyle);
+        createCell(headerRow, colIdx++, "Member 2 Name", headerStyle);
+        createCell(headerRow, colIdx++, "Member 3 Name", headerStyle);
 
         for (Round r : masterRounds) {
             String roundLabel = "Round " + r.getRoundNumber() + " (" + r.getRoundName() + ")";
@@ -275,6 +304,8 @@ public class ExportScoresServlet extends HttpServlet {
             createCell(row, colIdx++, team.getCollegeName(), curData);
             createCell(row, colIdx++, team.getTeamLeadName(), curData);
             createCell(row, colIdx++, team.getLeadEmail(), curData);
+            createCell(row, colIdx++, formatMemberName(team.getMember2Name()), curData);
+            createCell(row, colIdx++, formatMemberName(team.getMember3Name()), curData);
 
             Map<Integer, Score> scores = teamScoreMap.getOrDefault(team.getUniqueId(), Collections.emptyMap());
             double total = 0;
@@ -311,7 +342,7 @@ public class ExportScoresServlet extends HttpServlet {
                 allCriteria.addAll(comp.getCriteria());
             }
 
-            int roundCols = 4 + allCriteria.size() + 1; // #, Code, College, Lead, [Criteria...], Round Total
+            int roundCols = 6 + allCriteria.size() + 1; // #, Code, College, Lead, Member 2, Member 3, [Criteria...], Round Total
 
             // Title row
             Row rTitleRow = roundSheet.createRow(0);
@@ -333,6 +364,8 @@ public class ExportScoresServlet extends HttpServlet {
             createCell(rHeaderRow, rCol++, "Team Code", headerStyle);
             createCell(rHeaderRow, rCol++, "College", headerStyle);
             createCell(rHeaderRow, rCol++, "Team Lead", headerStyle);
+            createCell(rHeaderRow, rCol++, "Member 2", headerStyle);
+            createCell(rHeaderRow, rCol++, "Member 3", headerStyle);
 
             for (JudgingCriterion crit : allCriteria) {
                 String critLabel = crit.getCriterionName() + " (" + crit.getMaxMarks() + " pts)";
@@ -357,6 +390,8 @@ public class ExportScoresServlet extends HttpServlet {
                 createCell(row, rCol++, team.getUniqueId(), curCenter);
                 createCell(row, rCol++, team.getCollegeName(), curData);
                 createCell(row, rCol++, team.getTeamLeadName(), curData);
+                createCell(row, rCol++, formatMemberName(team.getMember2Name()), curData);
+                createCell(row, rCol++, formatMemberName(team.getMember3Name()), curData);
 
                 Map<Integer, Double> critScores = vortexCriteriaDAO.getTeamScoresForRound(team.getUniqueId(), vr.getRoundId());
                 double rTotal = 0;
