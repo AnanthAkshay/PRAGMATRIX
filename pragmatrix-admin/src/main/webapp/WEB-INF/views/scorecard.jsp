@@ -37,7 +37,7 @@
 
         <!-- Back link + Print button -->
         <div class="d-flex justify-between align-center flex-wrap gap-md mb-2 no-print">
-            <a href="${pageContext.request.contextPath}/admin/dashboard?quiz=${team.quizCode}" style="color: var(--gold-700); font-weight: 500;">
+            <a href="${pageContext.request.contextPath}/admin/dashboard?quiz=${team.quizCode}" class="btn btn-outline btn-sm">
                 &larr; Back to Dashboard
             </a>
             <div class="d-flex gap-sm">
