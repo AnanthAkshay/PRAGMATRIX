@@ -125,9 +125,32 @@
             border-radius: 4px;
             font-weight: 600;
         }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .toast-notification {
+            pointer-events: auto;
+            padding: 0.85rem 1.4rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(8px);
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-12px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
     </style>
 </head>
 <body>
+
+    <!-- Floating Global Toast Notifications -->
+    <div id="toast-container" style="position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.6rem; pointer-events: none;"></div>
 
     <!-- ===== HEADER ===== -->
     <header class="site-header">
@@ -302,6 +325,9 @@
 
                                 <!-- Accordion Body (Detailed Scoring UI for this Team) -->
                                 <div class="team-accordion-body" id="body-${team.uniqueId}">
+                                    <!-- Inline Alert Container for this Team Card -->
+                                    <div id="card-alert-${team.uniqueId}"></div>
+
                                     <div class="d-flex justify-between align-center flex-wrap gap-md mb-2" style="background: rgba(124,58,237,0.04); padding: 0.75rem 1rem; border-radius: var(--radius-sm);">
                                         <div>
                                             <span style="font-size: 0.85rem; color: var(--gray-600);">Scoring for:</span>
@@ -542,11 +568,9 @@
 
         // Close all other cards first (single active accordion item)
         document.querySelectorAll('.team-accordion-card.open').forEach(function(c) {
-            c.classList.remove('open');
-            var btn = c.querySelector('.btn-toggle-team');
-            if (btn) {
-                var scored = c.getAttribute('data-scored') === 'true';
-                btn.textContent = isRoundFinished ? 'View Scores' : (scored ? 'Edit Scores' : 'Enter Scores');
+            var otherId = c.getAttribute('data-team-id');
+            if (otherId !== teamId) {
+                closeTeamAccordion(otherId);
             }
         });
 
@@ -555,18 +579,186 @@
             var btn = document.getElementById('btn-toggle-' + teamId);
             if (btn) btn.textContent = 'Close';
 
+            // Clear any old inline alert
+            clearCardAlert(teamId);
+
             // Focus the first score input in this card
             setTimeout(function() {
                 var firstInput = card.querySelector('.crit-input:not([disabled])');
                 if (firstInput) firstInput.focus();
             }, 100);
+        } else {
+            closeTeamAccordion(teamId);
         }
     }
 
-    // Save single team scores
+    // Close specific team accordion panel
+    function closeTeamAccordion(teamId) {
+        var card = document.getElementById('team-card-' + teamId);
+        if (!card) return;
+
+        card.classList.remove('open');
+        var btn = document.getElementById('btn-toggle-' + teamId);
+        if (btn) {
+            var scored = card.getAttribute('data-scored') === 'true';
+            btn.textContent = isRoundFinished ? 'View Scores' : (scored ? 'Edit Scores' : 'Enter Scores');
+        }
+    }
+
+    // Show inline alert inside team card body
+    function showCardAlert(teamId, type, message) {
+        var alertContainer = document.getElementById('card-alert-' + teamId);
+        if (!alertContainer) return;
+
+        alertContainer.innerHTML =
+            '<div class="alert alert-' + (type === 'error' ? 'error' : 'success') + '" style="margin-bottom: 1rem;">' +
+                '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+                '<span>' + message + '</span>' +
+            '</div>';
+
+        alertContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Clear inline alert inside team card body
+    function clearCardAlert(teamId) {
+        var alertContainer = document.getElementById('card-alert-' + teamId);
+        if (alertContainer) {
+            alertContainer.innerHTML = '';
+        }
+    }
+
+    // Show floating global toast
+    function showGlobalToast(message, type) {
+        var container = document.getElementById('toast-container');
+        if (!container) return;
+
+        var toast = document.createElement('div');
+        toast.className = 'toast-notification';
+
+        if (type === 'error') {
+            toast.style.background = 'linear-gradient(135deg, rgba(220, 38, 38, 0.95), rgba(185, 28, 28, 0.95))';
+            toast.style.color = '#ffffff';
+            toast.style.border = '1px solid rgba(239, 68, 68, 0.6)';
+            toast.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>' + message + '</span>';
+        } else {
+            toast.style.background = 'linear-gradient(135deg, rgba(22, 101, 52, 0.95), rgba(21, 128, 61, 0.95))';
+            toast.style.color = '#ffffff';
+            toast.style.border = '1px solid rgba(34, 197, 94, 0.6)';
+            toast.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span>' + message + '</span>';
+        }
+
+        container.appendChild(toast);
+        setTimeout(function() {
+            toast.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-10px)';
+            setTimeout(function() { toast.remove(); }, 400);
+        }, 4000);
+    }
+
+    // Save single team scores (AJAX with automatic close on success & stay open on error)
     function saveTeamScores(teamId) {
-        document.getElementById('targetTeamInput').value = teamId;
-        document.getElementById('score-form').submit();
+        var card = document.getElementById('team-card-' + teamId);
+        if (!card) return;
+
+        var saveBtn = document.getElementById('btn-save-' + teamId);
+        var originalBtnHtml = saveBtn ? saveBtn.innerHTML : '';
+
+        // 1. Client-side input validation for this team
+        var inputs = card.querySelectorAll('.score-field-' + teamId);
+        var hasValidationError = false;
+        var validationErrorMessage = '';
+
+        inputs.forEach(function(input) {
+            var val = parseFloat(input.value);
+            var max = parseFloat(input.getAttribute('data-max')) || 0;
+            if (!isNaN(val)) {
+                if (val < 0) {
+                    hasValidationError = true;
+                    validationErrorMessage = 'Scores cannot be negative.';
+                    input.style.borderColor = '#ef4444';
+                    input.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
+                } else if (val > max) {
+                    hasValidationError = true;
+                    validationErrorMessage = 'Score exceeds maximum marks of ' + max + '.';
+                    input.style.borderColor = '#ef4444';
+                    input.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
+                }
+            }
+        });
+
+        if (hasValidationError) {
+            // Keep panel OPEN on validation error!
+            showCardAlert(teamId, 'error', validationErrorMessage);
+            return;
+        }
+
+        // Set button to saving state
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="spinner" style="display:inline-block; width:14px; height:14px; border:2px solid #fff; border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; vertical-align:middle; margin-right:6px;"></span> Saving...';
+        }
+
+        // Prepare submission payload
+        var form = document.getElementById('score-form');
+        var formData = new FormData(form);
+        formData.set('targetTeam', teamId);
+        formData.set('ajax', 'true');
+
+        var params = new URLSearchParams();
+        for (var pair of formData.entries()) {
+            params.append(pair[0], pair[1]);
+        }
+
+        // Submit via asynchronous fetch
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: params.toString()
+        })
+        .then(function(response) {
+            if (!response.ok) {
+                throw new Error('Server returned HTTP ' + response.status);
+            }
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                // Clear any lingering error in card
+                clearCardAlert(teamId);
+
+                // Update live calculations & badges in the compact row
+                recalculateTeamTotals();
+
+                // AUTOMATICALLY CLOSE/COLLAPSE the expanded scoring panel
+                closeTeamAccordion(teamId);
+
+                // Highlight the compact card to give immediate visual feedback
+                card.classList.add('highlight');
+                setTimeout(function() {
+                    card.classList.remove('highlight');
+                }, 2500);
+
+                // Show floating success toast
+                showGlobalToast('✓ Scores for ' + teamId + ' saved successfully.', 'success');
+            } else {
+                // KEEP PANEL OPEN on failure & show error message
+                showCardAlert(teamId, 'error', data.error || 'Failed to save scores.');
+            }
+        })
+        .catch(function(err) {
+            // KEEP PANEL OPEN on network/server error
+            showCardAlert(teamId, 'error', 'Error saving scores: ' + err.message);
+        })
+        .finally(function() {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalBtnHtml;
+            }
+        });
     }
 
     // Live calculation for VORTEX criteria scores
@@ -610,7 +802,7 @@
             if (headerBadge) {
                 if (hasAnyScore) {
                     headerBadge.className = 'badge-scored';
-                    headerBadge.innerHTML = '&#10003; Scored (' + total.toFixed(2) + ' / ' + totalMaxMarks + ')';
+                    headerBadge.innerHTML = '&#10003; Scored (<span id="header-total-' + teamId + '">' + total.toFixed(2) + '</span> / ' + totalMaxMarks + ')';
                     card.setAttribute('data-scored', 'true');
                     scoredCount++;
                 } else {
@@ -704,26 +896,30 @@
         });
     }
 
-    // Initial setup & auto-expand saved team
+    // Initial setup (Recalculate totals & highlight saved team in compact state without opening)
     (function() {
         recalculateTeamTotals();
 
-        // Check if a savedTeam is requested in URL
+        // Check if a savedTeam was passed in URL (from fallback redirect)
         var urlParams = new URLSearchParams(window.location.search);
         var savedTeam = urlParams.get('savedTeam');
         if (savedTeam) {
             var card = document.getElementById('team-card-' + savedTeam);
             if (card) {
-                toggleTeamAccordion(savedTeam);
+                // Ensure card remains compact/closed and give highlight feedback
+                closeTeamAccordion(savedTeam);
                 card.classList.add('highlight');
                 card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(function() {
+                    card.classList.remove('highlight');
+                }, 2500);
             }
         }
     })();
 
-    // Auto-dismiss alerts
+    // Auto-dismiss standard alerts
     setTimeout(function() {
-        var alerts = document.querySelectorAll('.alert');
+        var alerts = document.querySelectorAll('.alert:not(.card-inline-alert)');
         alerts.forEach(function(a) {
             a.style.transition = 'opacity 0.5s ease';
             a.style.opacity = '0';
@@ -733,3 +929,4 @@
     </script>
 </body>
 </html>
+

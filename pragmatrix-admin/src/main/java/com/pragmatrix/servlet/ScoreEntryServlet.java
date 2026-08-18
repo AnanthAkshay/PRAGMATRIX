@@ -109,10 +109,20 @@ public class ScoreEntryServlet extends HttpServlet {
         req.setCharacterEncoding("UTF-8");
         HttpSession session = req.getSession(false);
 
+        boolean isAjax = "XMLHttpRequest".equalsIgnoreCase(req.getHeader("X-Requested-With"))
+                || "true".equalsIgnoreCase(req.getParameter("ajax"))
+                || (req.getHeader("Accept") != null && req.getHeader("Accept").contains("application/json"));
+
+        String targetTeam = req.getParameter("targetTeam");
+
         try {
             String roundIdStr = req.getParameter("roundId");
             if (roundIdStr == null) {
-                resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
+                if (isAjax) {
+                    sendJsonResponse(resp, false, null, "Missing round ID parameter", targetTeam);
+                } else {
+                    resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
+                }
                 return;
             }
 
@@ -120,12 +130,20 @@ public class ScoreEntryServlet extends HttpServlet {
             Round round = roundDAO.findById(roundId);
 
             if (round == null) {
-                resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
+                if (isAjax) {
+                    sendJsonResponse(resp, false, null, "Round not found", targetTeam);
+                } else {
+                    resp.sendRedirect(req.getContextPath() + "/admin/dashboard");
+                }
                 return;
             }
 
             if (round.isFinished()) {
-                resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=Round+is+finished");
+                if (isAjax) {
+                    sendJsonResponse(resp, false, null, "Round is finished and locked for score entry", targetTeam);
+                } else {
+                    resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=Round+is+finished");
+                }
                 return;
             }
 
@@ -148,6 +166,11 @@ public class ScoreEntryServlet extends HttpServlet {
                         if (round.getRoundNumber() == 4 && !team.isAdvancedToFinale()) {
                             continue;
                         }
+                        // If a specific targetTeam was submitted, only process that team
+                        if (targetTeam != null && !targetTeam.trim().isEmpty() && !targetTeam.trim().equalsIgnoreCase(team.getUniqueId())) {
+                            continue;
+                        }
+
                         Map<Integer, Double> critScores = new HashMap<>();
                         for (JudgingComponent comp : vortexRound.getComponents()) {
                             for (JudgingCriterion crit : comp.getCriteria()) {
@@ -156,12 +179,22 @@ public class ScoreEntryServlet extends HttpServlet {
                                     try {
                                         double scoreVal = Double.parseDouble(valStr.trim());
                                         if (scoreVal < 0 || scoreVal > crit.getMaxMarks()) {
-                                            resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=Score+for+" + team.getUniqueId() + "+exceeds+max+marks+of+" + crit.getMaxMarks());
+                                            String errMsg = "Score for " + team.getUniqueId() + " exceeds max marks of " + crit.getMaxMarks();
+                                            if (isAjax) {
+                                                sendJsonResponse(resp, false, null, errMsg, team.getUniqueId());
+                                            } else {
+                                                resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=" + java.net.URLEncoder.encode(errMsg, java.nio.charset.StandardCharsets.UTF_8));
+                                            }
                                             return;
                                         }
                                         critScores.put(crit.getCriterionId(), scoreVal);
                                     } catch (NumberFormatException nfe) {
-                                        resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=Invalid+numeric+score+entered+for+" + team.getUniqueId());
+                                        String errMsg = "Invalid numeric score entered for " + team.getUniqueId();
+                                        if (isAjax) {
+                                            sendJsonResponse(resp, false, null, errMsg, team.getUniqueId());
+                                        } else {
+                                            resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=" + java.net.URLEncoder.encode(errMsg, java.nio.charset.StandardCharsets.UTF_8));
+                                        }
                                         return;
                                     }
                                 }
@@ -170,13 +203,23 @@ public class ScoreEntryServlet extends HttpServlet {
                         if (!critScores.isEmpty()) {
                             boolean saved = vortexDAO.saveTeamScores(team.getUniqueId(), vortexRound.getRoundId(), roundId, critScores, adminName);
                             if (!saved) {
-                                resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=Database+error+saving+scores+for+" + team.getUniqueId());
+                                String errMsg = "Database error saving scores for " + team.getUniqueId();
+                                if (isAjax) {
+                                    sendJsonResponse(resp, false, null, errMsg, team.getUniqueId());
+                                } else {
+                                    resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=" + java.net.URLEncoder.encode(errMsg, java.nio.charset.StandardCharsets.UTF_8));
+                                }
                                 return;
                             }
                         }
                     }
                 } else {
-                    resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=No+judging+criteria+configured+for+this+round.+Please+manage+criteria+first.");
+                    String errMsg = "No judging criteria configured for this round. Please manage criteria first.";
+                    if (isAjax) {
+                        sendJsonResponse(resp, false, null, errMsg, targetTeam);
+                    } else {
+                        resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=" + java.net.URLEncoder.encode(errMsg, java.nio.charset.StandardCharsets.UTF_8));
+                    }
                     return;
                 }
             } else {
@@ -194,7 +237,12 @@ public class ScoreEntryServlet extends HttpServlet {
                                 scores.add(new Score(team.getUniqueId(), roundId, points, adminId));
                             }
                         } catch (NumberFormatException nfe) {
-                            resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=Invalid+numeric+score+entered+for+" + team.getUniqueId());
+                            String errMsg = "Invalid numeric score entered for " + team.getUniqueId();
+                            if (isAjax) {
+                                sendJsonResponse(resp, false, null, errMsg, team.getUniqueId());
+                            } else {
+                                resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&error=" + java.net.URLEncoder.encode(errMsg, java.nio.charset.StandardCharsets.UTF_8));
+                            }
                             return;
                         }
                     }
@@ -204,21 +252,56 @@ public class ScoreEntryServlet extends HttpServlet {
                 }
             }
 
-            String targetTeam = req.getParameter("targetTeam");
-            String redirectUrl = req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&success=Scores+saved+successfully";
-            if (targetTeam != null && !targetTeam.trim().isEmpty()) {
-                redirectUrl += "&savedTeam=" + java.net.URLEncoder.encode(targetTeam.trim(), java.nio.charset.StandardCharsets.UTF_8);
+            if (isAjax) {
+                sendJsonResponse(resp, true, "Scores saved successfully", null, targetTeam);
+            } else {
+                String redirectUrl = req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&success=Scores+saved+successfully";
+                if (targetTeam != null && !targetTeam.trim().isEmpty()) {
+                    redirectUrl += "&savedTeam=" + java.net.URLEncoder.encode(targetTeam.trim(), java.nio.charset.StandardCharsets.UTF_8);
+                }
+                resp.sendRedirect(redirectUrl);
             }
-            resp.sendRedirect(redirectUrl);
 
         } catch (Exception e) {
             e.printStackTrace();
             String roundIdParam = req.getParameter("roundId");
-            if (roundIdParam != null && !roundIdParam.trim().isEmpty()) {
+            if (isAjax) {
+                sendJsonResponse(resp, false, null, "Failed to save scores: " + e.getMessage(), targetTeam);
+            } else if (roundIdParam != null && !roundIdParam.trim().isEmpty()) {
                 resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundIdParam.trim() + "&error=Failed+to+save+scores");
             } else {
                 resp.sendRedirect(req.getContextPath() + "/admin/dashboard?error=Failed+to+save+scores");
             }
         }
+    }
+
+    private void sendJsonResponse(HttpServletResponse resp, boolean success, String message, String error, String targetTeam) throws IOException {
+        resp.setContentType("application/json");
+        resp.setCharacterEncoding("UTF-8");
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        sb.append("\"success\":").append(success);
+        if (message != null) {
+            sb.append(",\"message\":\"").append(escapeJson(message)).append("\"");
+        }
+        if (error != null) {
+            sb.append(",\"error\":\"").append(escapeJson(error)).append("\"");
+        }
+        if (targetTeam != null) {
+            sb.append(",\"targetTeam\":\"").append(escapeJson(targetTeam)).append("\"");
+        }
+        sb.append("}");
+        resp.getWriter().write(sb.toString());
+    }
+
+    private String escapeJson(String str) {
+        if (str == null) return "";
+        return str.replace("\\", "\\\\")
+                  .replace("\"", "\\\"")
+                  .replace("\b", "\\b")
+                  .replace("\f", "\\f")
+                  .replace("\n", "\\n")
+                  .replace("\r", "\\r")
+                  .replace("\t", "\\t");
     }
 }
