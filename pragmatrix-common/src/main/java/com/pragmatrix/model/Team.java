@@ -11,6 +11,8 @@ public class Team {
     private String collegeName;
     private String teamLeadName;
     private String leadEmail;
+    private String member2Name;
+    private String member3Name;
     private Timestamp registeredAt;
 
     private boolean eliminated;
@@ -28,6 +30,15 @@ public class Team {
         this.leadEmail = leadEmail;
     }
 
+    public Team(String quizCode, String collegeName, String teamLeadName, String leadEmail, String member2Name, String member3Name) {
+        this.quizCode = quizCode;
+        this.collegeName = collegeName;
+        this.teamLeadName = teamLeadName;
+        this.leadEmail = leadEmail;
+        this.member2Name = member2Name;
+        this.member3Name = member3Name;
+    }
+
     public String getUniqueId() { return uniqueId; }
     public void setUniqueId(String uniqueId) { this.uniqueId = uniqueId; }
 
@@ -42,6 +53,12 @@ public class Team {
 
     public String getLeadEmail() { return leadEmail; }
     public void setLeadEmail(String leadEmail) { this.leadEmail = leadEmail; }
+
+    public String getMember2Name() { return member2Name; }
+    public void setMember2Name(String member2Name) { this.member2Name = member2Name; }
+
+    public String getMember3Name() { return member3Name; }
+    public void setMember3Name(String member3Name) { this.member3Name = member3Name; }
 
     public boolean isEliminated() { return eliminated; }
     public void setEliminated(boolean eliminated) { this.eliminated = eliminated; }

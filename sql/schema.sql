@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS teams (
     college_name       VARCHAR(150) NOT NULL,
     team_lead_name     VARCHAR(100) NOT NULL,
     lead_email         VARCHAR(150) NOT NULL,
+    member2_name       VARCHAR(150) NULL,
+    member3_name       VARCHAR(150) NULL,
     is_eliminated      BOOLEAN      NOT NULL DEFAULT FALSE,
     advanced_to_finale BOOLEAN      NOT NULL DEFAULT FALSE,
     registered_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,

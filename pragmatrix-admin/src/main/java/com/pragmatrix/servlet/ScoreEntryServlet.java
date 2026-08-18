@@ -204,7 +204,12 @@ public class ScoreEntryServlet extends HttpServlet {
                 }
             }
 
-            resp.sendRedirect(req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&success=Scores+saved+successfully");
+            String targetTeam = req.getParameter("targetTeam");
+            String redirectUrl = req.getContextPath() + "/admin/score-entry?roundId=" + roundId + "&success=Scores+saved+successfully";
+            if (targetTeam != null && !targetTeam.trim().isEmpty()) {
+                redirectUrl += "&savedTeam=" + java.net.URLEncoder.encode(targetTeam.trim(), java.nio.charset.StandardCharsets.UTF_8);
+            }
+            resp.sendRedirect(redirectUrl);
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -32,14 +32,24 @@ public class TeamDAO {
             String uniqueId = IdGenerator.generateNextId(conn, idPrefix);
             team.setUniqueId(uniqueId);
 
-            String sql = "INSERT INTO teams (unique_id, quiz_code, college_name, team_lead_name, lead_email) "
-                       + "VALUES (?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO teams (unique_id, quiz_code, college_name, team_lead_name, lead_email, member2_name, member3_name) "
+                       + "VALUES (?, ?, ?, ?, ?, ?, ?)";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, uniqueId);
                 ps.setString(2, team.getQuizCode());
                 ps.setString(3, team.getCollegeName());
                 ps.setString(4, team.getTeamLeadName());
                 ps.setString(5, team.getLeadEmail());
+                if (team.getMember2Name() != null && !team.getMember2Name().trim().isEmpty()) {
+                    ps.setString(6, team.getMember2Name().trim());
+                } else {
+                    ps.setNull(6, Types.VARCHAR);
+                }
+                if (team.getMember3Name() != null && !team.getMember3Name().trim().isEmpty()) {
+                    ps.setString(7, team.getMember3Name().trim());
+                } else {
+                    ps.setNull(7, Types.VARCHAR);
+                }
                 ps.executeUpdate();
             }
 
@@ -64,7 +74,7 @@ public class TeamDAO {
      */
     public Team findByUniqueId(String uniqueId) throws SQLException {
         String sql = "SELECT unique_id, quiz_code, college_name, team_lead_name, lead_email, "
-                   + "is_eliminated, advanced_to_finale, registered_at "
+                   + "member2_name, member3_name, is_eliminated, advanced_to_finale, registered_at "
                    + "FROM teams WHERE unique_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -102,14 +112,14 @@ public class TeamDAO {
     public List<Team> findByQuizCode(String quizCode) throws SQLException {
         List<Team> list = new ArrayList<>();
         String sql = "SELECT t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, "
-                   + "t.is_eliminated, t.advanced_to_finale, t.registered_at, "
+                   + "t.member2_name, t.member3_name, t.is_eliminated, t.advanced_to_finale, t.registered_at, "
                    + "COALESCE(SUM(CASE WHEN r.is_finished = TRUE THEN s.points ELSE 0 END), 0) AS total_points "
                    + "FROM teams t "
                    + "LEFT JOIN scores s ON t.unique_id = s.unique_id "
                    + "LEFT JOIN rounds r ON s.round_id = r.round_id "
                    + "WHERE t.quiz_code = ? "
                    + "GROUP BY t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, "
-                   + "t.is_eliminated, t.advanced_to_finale, t.registered_at "
+                   + "t.member2_name, t.member3_name, t.is_eliminated, t.advanced_to_finale, t.registered_at "
                    + "ORDER BY t.unique_id";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -131,14 +141,14 @@ public class TeamDAO {
     public List<Team> findActiveTeamsByQuizCode(String quizCode) throws SQLException {
         List<Team> list = new ArrayList<>();
         String sql = "SELECT t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, "
-                   + "t.is_eliminated, t.advanced_to_finale, t.registered_at, "
+                   + "t.member2_name, t.member3_name, t.is_eliminated, t.advanced_to_finale, t.registered_at, "
                    + "COALESCE(SUM(CASE WHEN r.is_finished = TRUE THEN s.points ELSE 0 END), 0) AS total_points "
                    + "FROM teams t "
                    + "LEFT JOIN scores s ON t.unique_id = s.unique_id "
                    + "LEFT JOIN rounds r ON s.round_id = r.round_id "
                    + "WHERE t.quiz_code = ? AND t.is_eliminated = FALSE "
                    + "GROUP BY t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, "
-                   + "t.is_eliminated, t.advanced_to_finale, t.registered_at "
+                   + "t.member2_name, t.member3_name, t.is_eliminated, t.advanced_to_finale, t.registered_at "
                    + "ORDER BY t.unique_id";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -160,14 +170,14 @@ public class TeamDAO {
     public List<Team> searchTeams(String quizCode, String query) throws SQLException {
         List<Team> list = new ArrayList<>();
         String sql = "SELECT t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, "
-                   + "t.is_eliminated, t.advanced_to_finale, t.registered_at, "
+                   + "t.member2_name, t.member3_name, t.is_eliminated, t.advanced_to_finale, t.registered_at, "
                    + "COALESCE(SUM(CASE WHEN r.is_finished = TRUE THEN s.points ELSE 0 END), 0) AS total_points "
                    + "FROM teams t "
                    + "LEFT JOIN scores s ON t.unique_id = s.unique_id "
                    + "LEFT JOIN rounds r ON s.round_id = r.round_id "
                    + "WHERE t.quiz_code = ? AND (t.unique_id LIKE ? OR t.college_name LIKE ?) "
                    + "GROUP BY t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, "
-                   + "t.is_eliminated, t.advanced_to_finale, t.registered_at "
+                   + "t.member2_name, t.member3_name, t.is_eliminated, t.advanced_to_finale, t.registered_at "
                    + "ORDER BY t.unique_id";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -285,6 +295,40 @@ public class TeamDAO {
     }
 
     /**
+     * Update team profile / registration details.
+     * Updates college_name, team_lead_name, lead_email, member2_name, member3_name.
+     * Does NOT modify unique_id, quiz_code, scores, is_eliminated, advanced_to_finale, or registered_at.
+     *
+     * @param team Team object containing updated details (must have uniqueId set)
+     * @return true if row was updated, false otherwise
+     * @throws SQLException if a database error occurs
+     */
+    public boolean updateTeamDetails(Team team) throws SQLException {
+        if (team == null || team.getUniqueId() == null) return false;
+        String sql = "UPDATE teams SET college_name = ?, team_lead_name = ?, lead_email = ?, "
+                   + "member2_name = ?, member3_name = ? "
+                   + "WHERE unique_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, team.getCollegeName());
+            ps.setString(2, team.getTeamLeadName());
+            ps.setString(3, team.getLeadEmail());
+            if (team.getMember2Name() != null && !team.getMember2Name().trim().isEmpty()) {
+                ps.setString(4, team.getMember2Name().trim());
+            } else {
+                ps.setNull(4, Types.VARCHAR);
+            }
+            if (team.getMember3Name() != null && !team.getMember3Name().trim().isEmpty()) {
+                ps.setString(5, team.getMember3Name().trim());
+            } else {
+                ps.setNull(5, Types.VARCHAR);
+            }
+            ps.setString(6, team.getUniqueId().trim());
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /**
      * Delete a team by unique ID. Cascades deletion of all associated scores and session tokens.
      */
     public boolean deleteByUniqueId(String uniqueId) throws SQLException {
@@ -303,6 +347,12 @@ public class TeamDAO {
         t.setCollegeName(rs.getString("college_name"));
         t.setTeamLeadName(rs.getString("team_lead_name"));
         t.setLeadEmail(rs.getString("lead_email"));
+        try {
+            t.setMember2Name(rs.getString("member2_name"));
+        } catch (SQLException ignored) {}
+        try {
+            t.setMember3Name(rs.getString("member3_name"));
+        } catch (SQLException ignored) {}
         t.setRegisteredAt(rs.getTimestamp("registered_at"));
         try {
             t.setEliminated(rs.getBoolean("is_eliminated"));

@@ -54,6 +54,8 @@ public class RegisterServlet extends HttpServlet {
         String collegeName = trim(req.getParameter("collegeName"));
         String teamLeadName = trim(req.getParameter("teamLeadName"));
         String leadEmail = trim(req.getParameter("leadEmail"));
+        String member2Name = trimToNull(req.getParameter("member2Name"));
+        String member3Name = trimToNull(req.getParameter("member3Name"));
 
         // Determine redirect quiz tab
         String redirectQuiz = (quizCode != null) ? quizCode : "BIZWIZX";
@@ -89,7 +91,7 @@ public class RegisterServlet extends HttpServlet {
                 return;
             }
 
-            Team team = new Team(quizCode, collegeName, teamLeadName, leadEmail);
+            Team team = new Team(quizCode, collegeName, teamLeadName, leadEmail, member2Name, member3Name);
 
             String uniqueId = teamDAO.insert(team, quiz.getIdPrefix());
 
@@ -113,6 +115,12 @@ public class RegisterServlet extends HttpServlet {
 
     private String trim(String s) {
         return (s == null) ? null : s.trim();
+    }
+
+    private String trimToNull(String s) {
+        if (s == null) return null;
+        String trimmed = s.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     /**

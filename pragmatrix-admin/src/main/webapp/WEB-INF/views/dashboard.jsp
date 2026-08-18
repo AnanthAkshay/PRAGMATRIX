@@ -149,11 +149,26 @@
                         <p class="form-hint">Participant ID will be emailed to this address upon team creation</p>
                     </div>
 
-                    <!-- Team Lead Name -->
+                    <div class="card-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                        <!-- Team Lead Name -->
                         <div class="form-group">
                             <label for="add-teamLeadName" class="form-label">Team Lead Name <span class="required">*</span></label>
                             <input type="text" name="teamLeadName" id="add-teamLeadName" class="form-control"
                                    placeholder="Full name of team lead" required maxlength="100">
+                        </div>
+
+                        <!-- Member 2 Name (Optional) -->
+                        <div class="form-group">
+                            <label for="add-member2Name" class="form-label">Member 2 Name <span style="font-size: 0.8rem; font-weight: normal; color: var(--gray-400);">(Optional)</span></label>
+                            <input type="text" name="member2Name" id="add-member2Name" class="form-control"
+                                   placeholder="Full name of member 2" maxlength="150">
+                        </div>
+
+                        <!-- Member 3 Name (Optional) -->
+                        <div class="form-group">
+                            <label for="add-member3Name" class="form-label">Member 3 Name <span style="font-size: 0.8rem; font-weight: normal; color: var(--gray-400);">(Optional)</span></label>
+                            <input type="text" name="member3Name" id="add-member3Name" class="form-control"
+                                   placeholder="Full name of member 3" maxlength="150">
                         </div>
                     </div>
 
@@ -378,6 +393,10 @@
                                            class="btn btn-outline btn-sm" title="View Scorecard">
                                             Scorecard
                                         </a>
+                                        <a href="${pageContext.request.contextPath}/admin/edit-team?uniqueId=${team.uniqueId}"
+                                           class="btn btn-outline btn-sm" title="Edit Team Details" id="btn-edit-team-${team.uniqueId}">
+                                            Edit
+                                        </a>
                                         <c:if test="${selectedQuiz == 'BIZWIZX'}">
                                             <c:choose>
                                                 <c:when test="${team.eliminated}">
@@ -393,16 +412,15 @@
                                                     </form>
                                                 </c:when>
                                                 <c:otherwise>
-                                                    <form action="${pageContext.request.contextPath}/admin/eliminate-teams" method="POST" style="display:inline;">
-                                                        <input type="hidden" name="uniqueId" value="${team.uniqueId}">
-                                                        <input type="hidden" name="quizCode" value="${selectedQuiz}">
-                                                        <input type="hidden" name="action" value="eliminate">
-                                                        <button type="submit" class="btn btn-sm btn-outline" title="Eliminate Team"
-                                                                style="padding: 0.3rem 0.6rem; font-size: 0.75rem; color: #ef4444; border-color: #ef4444;"
-                                                                onclick="return confirm('Mark team ${team.uniqueId} (${team.collegeName}) as Eliminated? They will no longer be scored in subsequent rounds.')">
-                                                            Eliminate
-                                                        </button>
-                                                    </form>
+                                                    <button type="button" class="btn btn-sm btn-outline" title="Eliminate Team"
+                                                            style="padding: 0.3rem 0.6rem; font-size: 0.75rem; color: #ef4444; border-color: #ef4444;"
+                                                            data-uid="${team.uniqueId}"
+                                                            data-college="<c:out value='${team.collegeName}'/>"
+                                                            data-lead="<c:out value='${team.teamLeadName}'/>"
+                                                            data-quiz="${selectedQuiz}"
+                                                            onclick="openEliminateModal(this.dataset.uid, this.dataset.college, this.dataset.lead, this.dataset.quiz)">
+                                                        Eliminate
+                                                    </button>
                                                 </c:otherwise>
                                             </c:choose>
                                         </c:if>
@@ -415,15 +433,15 @@
                                                 Resend
                                             </button>
                                         </form>
-                                        <form action="${pageContext.request.contextPath}/admin/delete-team" method="POST" style="display:inline;">
-                                            <input type="hidden" name="uniqueId" value="${team.uniqueId}">
-                                            <input type="hidden" name="quizCode" value="${selectedQuiz}">
-                                            <button type="submit" class="btn btn-danger btn-sm" title="Remove Team"
-                                                    style="padding: 0.3rem 0.6rem; font-size: 0.75rem;"
-                                                    onclick="return confirm('Are you sure you want to remove team ${team.uniqueId} (${team.collegeName})? This cannot be undone.')">
-                                                Remove
-                                            </button>
-                                        </form>
+                                        <button type="button" class="btn btn-danger btn-sm" title="Remove Team"
+                                                style="padding: 0.3rem 0.6rem; font-size: 0.75rem;"
+                                                data-uid="${team.uniqueId}"
+                                                data-college="<c:out value='${team.collegeName}'/>"
+                                                data-lead="<c:out value='${team.teamLeadName}'/>"
+                                                data-quiz="${selectedQuiz}"
+                                                onclick="openRemoveTeamModal(this.dataset.uid, this.dataset.college, this.dataset.lead, this.dataset.quiz)">
+                                            Remove
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -535,7 +553,11 @@
                                         </td>
                                         <td style="text-align: center;">
                                             <button type="button" class="btn btn-danger btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;"
-                                                    onclick="eliminateSingleTeam('${entry.uniqueId}', '${entry.collegeName}', '${entry.rank}', '${entry.totalPoints}')">
+                                                    data-uid="${entry.uniqueId}"
+                                                    data-college="<c:out value='${entry.collegeName}'/>"
+                                                    data-lead="<c:out value='${entry.teamLeadName}'/>"
+                                                    data-quiz="BIZWIZX"
+                                                    onclick="openEliminateModal(this.dataset.uid, this.dataset.college, this.dataset.lead, this.dataset.quiz)">
                                                 Eliminate
                                             </button>
                                         </td>
@@ -670,7 +692,11 @@
                                         </td>
                                         <td style="text-align: center;">
                                             <button type="button" class="btn btn-danger btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;"
-                                                    onclick="eliminateSingleTeam('${entry.uniqueId}', '${entry.collegeName}', '${entry.rank}', '${entry.totalPoints}')">
+                                                    data-uid="${entry.uniqueId}"
+                                                    data-college="<c:out value='${entry.collegeName}'/>"
+                                                    data-lead="<c:out value='${entry.teamLeadName}'/>"
+                                                    data-quiz="BIZWIZX"
+                                                    onclick="openEliminateModal(this.dataset.uid, this.dataset.college, this.dataset.lead, this.dataset.quiz)">
                                                 Eliminate
                                             </button>
                                         </td>
@@ -846,12 +872,197 @@
         </div>
     </c:if>
 
+    <!-- ============================================================ -->
+    <!-- Confirmation Modal: Team Elimination                         -->
+    <!-- ============================================================ -->
+    <div id="singleEliminationModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.78); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);" role="dialog" aria-labelledby="elimModalTitle" aria-modal="true">
+        <div class="glass-panel" style="max-width: 520px; width: 92%; background: #16192b; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 12px; padding: 2rem; box-shadow: 0 12px 48px rgba(0,0,0,0.6);">
+            <div class="d-flex justify-between align-center mb-2">
+                <h3 id="elimModalTitle" style="margin: 0; color: #ef4444; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>&#9888;</span> Confirm Team Elimination
+                </h3>
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeEliminationModal()" aria-label="Close dialog" style="font-size: 1.3rem; line-height: 1; padding: 0.2rem 0.6rem; color: #fff;">&times;</button>
+            </div>
+
+            <p style="margin: 0 0 1.25rem 0; font-size: 0.9rem; color: var(--gray-300); line-height: 1.5;">
+                Are you sure you want to eliminate this team? They will no longer be eligible or scored for subsequent rounds.
+            </p>
+
+            <!-- Team Details -->
+            <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+                <div style="display: grid; grid-template-columns: 100px 1fr; gap: 0.5rem; font-size: 0.85rem; align-items: baseline;">
+                    <span style="color: var(--gray-400);">Team Code:</span>
+                    <strong style="color: var(--purple-300); font-family: var(--font-display); font-size: 0.95rem;" id="elimModalUniqueId"></strong>
+
+                    <span style="color: var(--gray-400);">College:</span>
+                    <span style="color: #ffffff; font-weight: 600;" id="elimModalCollege"></span>
+
+                    <span style="color: var(--gray-400);">Team Lead:</span>
+                    <span style="color: var(--gray-200);" id="elimModalLead"></span>
+
+                    <span style="color: var(--gray-400);">Event:</span>
+                    <span style="color: var(--gold-400); font-weight: 600;" id="elimModalQuiz"></span>
+                </div>
+            </div>
+
+            <!-- Elimination Form -->
+            <form id="singleEliminationForm" action="${pageContext.request.contextPath}/admin/eliminate-teams" method="POST">
+                <input type="hidden" name="uniqueId" id="elimFormUniqueId" value="">
+                <input type="hidden" name="quizCode" id="elimFormQuizCode" value="">
+                <input type="hidden" name="action" value="eliminate">
+
+                <div class="d-flex justify-end gap-sm">
+                    <button type="button" class="btn btn-outline" id="btn-cancel-elim" onclick="closeEliminationModal()">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-elim" onclick="submitSingleElimination()" style="font-weight: 600;">
+                        Confirm Elimination
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- Confirmation Modal: Team Removal (Deletion)                  -->
+    <!-- ============================================================ -->
+    <div id="singleRemoveTeamModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.78); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);" role="dialog" aria-labelledby="removeModalTitle" aria-modal="true">
+        <div class="glass-panel" style="max-width: 520px; width: 92%; background: #16192b; border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 12px; padding: 2rem; box-shadow: 0 12px 48px rgba(0,0,0,0.6);">
+            <div class="d-flex justify-between align-center mb-2">
+                <h3 id="removeModalTitle" style="margin: 0; color: #ef4444; font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>&#9888;</span> Confirm Team Removal
+                </h3>
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeRemoveTeamModal()" aria-label="Close dialog" style="font-size: 1.3rem; line-height: 1; padding: 0.2rem 0.6rem; color: #fff;">&times;</button>
+            </div>
+
+            <p style="margin: 0 0 1.25rem 0; font-size: 0.9rem; color: var(--gray-300); line-height: 1.5;">
+                Are you sure you want to permanently remove this team? <span style="color: #ef4444; font-weight: 600;">This cannot be undone.</span> All registered scores, sessions, and records for this team will be wiped.
+            </p>
+
+            <!-- Team Details -->
+            <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+                <div style="display: grid; grid-template-columns: 100px 1fr; gap: 0.5rem; font-size: 0.85rem; align-items: baseline;">
+                    <span style="color: var(--gray-400);">Team Code:</span>
+                    <strong style="color: var(--purple-300); font-family: var(--font-display); font-size: 0.95rem;" id="removeModalUniqueId"></strong>
+
+                    <span style="color: var(--gray-400);">College:</span>
+                    <span style="color: #ffffff; font-weight: 600;" id="removeModalCollege"></span>
+
+                    <span style="color: var(--gray-400);">Team Lead:</span>
+                    <span style="color: var(--gray-200);" id="removeModalLead"></span>
+
+                    <span style="color: var(--gray-400);">Event:</span>
+                    <span style="color: var(--gold-400); font-weight: 600;" id="removeModalQuiz"></span>
+                </div>
+            </div>
+
+            <!-- Remove Form -->
+            <form id="singleRemoveForm" action="${pageContext.request.contextPath}/admin/delete-team" method="POST">
+                <input type="hidden" name="uniqueId" id="removeFormUniqueId" value="">
+                <input type="hidden" name="quizCode" id="removeFormQuizCode" value="">
+
+                <div class="d-flex justify-end gap-sm">
+                    <button type="button" class="btn btn-outline" id="btn-cancel-remove" onclick="closeRemoveTeamModal()">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-remove" onclick="submitSingleRemove()" style="font-weight: 600;">
+                        Confirm Removal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="site-footer">
         <span class="footer-brand">PRAGMATRIX 2026</span> &mdash; Admin Dashboard
     </footer>
 
     <script>
+    /* Single Team Elimination Modal Handlers */
+    function openEliminateModal(uniqueId, collegeName, teamLeadName, quizCode) {
+        document.getElementById('elimModalUniqueId').textContent = uniqueId || '';
+        document.getElementById('elimModalCollege').textContent = collegeName || '—';
+        document.getElementById('elimModalLead').textContent = teamLeadName || '—';
+        document.getElementById('elimModalQuiz').textContent = quizCode || 'BIZWIZX';
+        
+        document.getElementById('elimFormUniqueId').value = uniqueId || '';
+        document.getElementById('elimFormQuizCode').value = quizCode || 'BIZWIZX';
+        
+        var modal = document.getElementById('singleEliminationModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            var cancelBtn = document.getElementById('btn-cancel-elim');
+            if (cancelBtn) cancelBtn.focus();
+        }
+    }
+
+    function closeEliminationModal() {
+        var modal = document.getElementById('singleEliminationModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        var confirmBtn = document.getElementById('btn-confirm-elim');
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirm Elimination';
+        }
+    }
+
+    function submitSingleElimination() {
+        var confirmBtn = document.getElementById('btn-confirm-elim');
+        if (confirmBtn) {
+            if (confirmBtn.disabled) return;
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Eliminating...';
+        }
+        document.getElementById('singleEliminationForm').submit();
+    }
+
+    /* Single Team Removal Modal Handlers */
+    function openRemoveTeamModal(uniqueId, collegeName, teamLeadName, quizCode) {
+        document.getElementById('removeModalUniqueId').textContent = uniqueId || '';
+        document.getElementById('removeModalCollege').textContent = collegeName || '—';
+        document.getElementById('removeModalLead').textContent = teamLeadName || '—';
+        document.getElementById('removeModalQuiz').textContent = quizCode || 'BIZWIZX';
+        
+        document.getElementById('removeFormUniqueId').value = uniqueId || '';
+        document.getElementById('removeFormQuizCode').value = quizCode || 'BIZWIZX';
+        
+        var modal = document.getElementById('singleRemoveTeamModal');
+        if (modal) {
+            modal.style.display = 'flex';
+            var cancelBtn = document.getElementById('btn-cancel-remove');
+            if (cancelBtn) cancelBtn.focus();
+        }
+    }
+
+    function closeRemoveTeamModal() {
+        var modal = document.getElementById('singleRemoveTeamModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        var confirmBtn = document.getElementById('btn-confirm-remove');
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Confirm Removal';
+        }
+    }
+
+    function submitSingleRemove() {
+        var confirmBtn = document.getElementById('btn-confirm-remove');
+        if (confirmBtn) {
+            if (confirmBtn.disabled) return;
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Removing...';
+        }
+        document.getElementById('singleRemoveForm').submit();
+    }
+
+    function eliminateSingleTeam(uniqueId, collegeName, rank, points) {
+        openEliminateModal(uniqueId, collegeName, '', 'BIZWIZX');
+    }
+
     /* VORTEX Advance Modal Handlers */
     function openVortexAdvanceModal() {
         var modal = document.getElementById('vortexAdvanceModal');
@@ -898,14 +1109,19 @@
                 return;
             }
         } else {
-            var msg = 'Are you sure you want to advance ' + checked.length + ' team(s) to the GRAND FINALE?\\n\\n';
+            var msg = 'Are you sure you want to advance ' + checked.length + ' team(s) to the GRAND FINALE?\n\n';
             if (checked.length !== 3) {
-                msg += 'Note: The standard number of finalists is 3. You currently have ' + checked.length + ' selected.\\n\\n';
+                msg += 'Note: The standard number of finalists is 3. You currently have ' + checked.length + ' selected.\n\n';
             }
             msg += 'Only selected teams will be scored in GRAND FINALE.';
             if (!confirm(msg)) {
                 return;
             }
+        }
+        var submitBtn = document.querySelector('#vortexAdvanceModal .btn-primary');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Advancing...';
         }
         document.getElementById('vortexAdvanceForm').submit();
     }
@@ -960,37 +1176,12 @@
         if (!confirm('Are you sure you want to ELIMINATE ' + checked.length + ' selected team(s)? They will no longer appear for scoring in subsequent rounds.')) {
             return;
         }
-        document.getElementById('rankedEliminationForm' + roundNum).submit();
-    }
-
-    function eliminateSingleTeam(uniqueId, collegeName, rank, points) {
-        if (!confirm('Eliminate team ' + uniqueId + ' (' + collegeName + ', Rank #' + rank + ', ' + points + ' pts)?\n\nThey will be excluded from subsequent rounds.')) {
-            return;
+        var submitBtn = document.querySelector('#rankedEliminationModal' + roundNum + ' .btn-danger');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Eliminating...';
         }
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '${pageContext.request.contextPath}/admin/eliminate-teams';
-        
-        var uidInput = document.createElement('input');
-        uidInput.type = 'hidden';
-        uidInput.name = 'uniqueId';
-        uidInput.value = uniqueId;
-        form.appendChild(uidInput);
-
-        var quizInput = document.createElement('input');
-        quizInput.type = 'hidden';
-        quizInput.name = 'quizCode';
-        quizInput.value = 'BIZWIZX';
-        form.appendChild(quizInput);
-
-        var actionInput = document.createElement('input');
-        actionInput.type = 'hidden';
-        actionInput.name = 'action';
-        actionInput.value = 'eliminate';
-        form.appendChild(actionInput);
-
-        document.body.appendChild(form);
-        form.submit();
+        document.getElementById('rankedEliminationForm' + roundNum).submit();
     }
 
     /* Toggle round edit form */
@@ -1047,6 +1238,38 @@
             });
         }
     })();
+
+    /* Global Escape Key and Backdrop Click Handler */
+    window.addEventListener('click', function(e) {
+        var elimModal = document.getElementById('singleEliminationModal');
+        if (elimModal && e.target === elimModal) {
+            closeEliminationModal();
+        }
+        var removeModal = document.getElementById('singleRemoveTeamModal');
+        if (removeModal && e.target === removeModal) {
+            closeRemoveTeamModal();
+        }
+        for (var r = 2; r <= 3; r++) {
+            var rModal = document.getElementById('rankedEliminationModal' + r);
+            if (rModal && e.target === rModal) {
+                closeRankedEliminationModal(r);
+            }
+        }
+        var vModal = document.getElementById('vortexAdvanceModal');
+        if (vModal && e.target === vModal) {
+            closeVortexAdvanceModal();
+        }
+    });
+
+    window.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' || e.keyCode === 27) {
+            closeEliminationModal();
+            closeRemoveTeamModal();
+            closeRankedEliminationModal(2);
+            closeRankedEliminationModal(3);
+            closeVortexAdvanceModal();
+        }
+    });
 
     /* Auto-dismiss alerts after 5 seconds */
     setTimeout(function() {

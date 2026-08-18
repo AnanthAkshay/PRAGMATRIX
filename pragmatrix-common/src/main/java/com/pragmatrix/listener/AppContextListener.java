@@ -171,7 +171,7 @@ public class AppContextListener implements ServletContextListener {
     }
 
     /**
-     * Ensures is_eliminated and advanced_to_finale columns exist on teams table.
+     * Ensures is_eliminated, advanced_to_finale, member2_name, and member3_name columns exist on teams table.
      */
     private void ensureTeamColumns() {
         try (java.sql.Connection conn = DBConnection.getConnection();
@@ -185,6 +185,18 @@ public class AppContextListener implements ServletContextListener {
             try {
                 stmt.executeUpdate("ALTER TABLE teams ADD COLUMN advanced_to_finale BOOLEAN NOT NULL DEFAULT FALSE");
                 System.out.println("[PRAGMATRIX] Added advanced_to_finale column to teams table.");
+            } catch (SQLException ignored) {
+                // Column already exists
+            }
+            try {
+                stmt.executeUpdate("ALTER TABLE teams ADD COLUMN member2_name VARCHAR(150) NULL");
+                System.out.println("[PRAGMATRIX] Added member2_name column to teams table.");
+            } catch (SQLException ignored) {
+                // Column already exists
+            }
+            try {
+                stmt.executeUpdate("ALTER TABLE teams ADD COLUMN member3_name VARCHAR(150) NULL");
+                System.out.println("[PRAGMATRIX] Added member3_name column to teams table.");
             } catch (SQLException ignored) {
                 // Column already exists
             }

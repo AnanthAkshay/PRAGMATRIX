@@ -127,6 +127,18 @@
                     <div class="info-label">Team Lead</div>
                     <div class="info-value"><c:out value="${team.teamLeadName}"/></div>
                 </div>
+                <c:if test="${not empty team.member2Name}">
+                    <div class="team-info-item">
+                        <div class="info-label">Member 2</div>
+                        <div class="info-value"><c:out value="${team.member2Name}"/></div>
+                    </div>
+                </c:if>
+                <c:if test="${not empty team.member3Name}">
+                    <div class="team-info-item">
+                        <div class="info-label">Member 3</div>
+                        <div class="info-value"><c:out value="${team.member3Name}"/></div>
+                    </div>
+                </c:if>
                 <c:if test="${team.eliminated}">
                     <div class="team-info-item" id="team-status-item">
                         <div class="info-label">Status</div>
@@ -299,6 +311,8 @@
                         </h3>
                         <p style="margin: 0.25rem 0 0 0; color: var(--gray-600); font-size: 0.85rem;">
                             Team Lead: <strong><c:out value="${team.teamLeadName}"/></strong>
+                            <c:if test="${not empty team.member2Name}"> &bull; Member 2: <strong><c:out value="${team.member2Name}"/></strong></c:if>
+                            <c:if test="${not empty team.member3Name}"> &bull; Member 3: <strong><c:out value="${team.member3Name}"/></strong></c:if>
                         </p>
                     </div>
                     <div class="d-flex align-center gap-sm">

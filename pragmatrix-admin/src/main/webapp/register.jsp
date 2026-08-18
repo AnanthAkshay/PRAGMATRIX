@@ -75,6 +75,24 @@
                            required maxlength="100">
                 </div>
 
+                <!-- Member 2 Name (Optional) -->
+                <div class="form-group">
+                    <label for="member2Name" class="form-label">Member 2 Name <span style="font-size: 0.85rem; font-weight: normal; color: var(--gray-400);">(Optional)</span></label>
+                    <input type="text" name="member2Name" id="member2Name" class="form-control"
+                           placeholder="Full name of member 2"
+                           value="<c:out value='${member2Name}'/>"
+                           maxlength="150">
+                </div>
+
+                <!-- Member 3 Name (Optional) -->
+                <div class="form-group">
+                    <label for="member3Name" class="form-label">Member 3 Name <span style="font-size: 0.85rem; font-weight: normal; color: var(--gray-400);">(Optional)</span></label>
+                    <input type="text" name="member3Name" id="member3Name" class="form-control"
+                           placeholder="Full name of member 3"
+                           value="<c:out value='${member3Name}'/>"
+                           maxlength="150">
+                </div>
+
                 <!-- Team Lead Email -->
                 <div class="form-group">
                     <label for="leadEmail" class="form-label">Team Lead Email <span class="required">*</span></label>
