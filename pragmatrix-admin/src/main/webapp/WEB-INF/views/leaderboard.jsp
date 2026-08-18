@@ -167,6 +167,19 @@
             if (el) el.textContent = 'Last updated: ' + now.toLocaleTimeString();
         }
 
+        function escapeHtml(str) {
+            if (!str) return '';
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        function formatScore(val) {
+            if (val === null || val === undefined || isNaN(val)) return '0';
+            var num = Number(val);
+            return Number(num.toFixed(2)).toString();
+        }
+
         function refreshLeaderboard() {
             fetch(baseUrl + '?quiz=' + quizCode + '&format=json')
                 .then(function(res) {
@@ -175,7 +188,14 @@
                 })
                 .then(function(data) {
                     var tbody = document.getElementById('leaderboard-tbody');
-                    if (!tbody || !data || !data.entries || data.entries.length === 0) return;
+                    if (!tbody || !data) return;
+
+                    if (!data.entries || data.entries.length === 0) {
+                        var colCount = 4 + (data.rounds ? data.rounds.length : 0) + 1;
+                        tbody.innerHTML = '<tr><td colspan="' + colCount + '" style="text-align: center; padding: 2rem; color: var(--gray-500);">No teams registered yet.</td></tr>';
+                        updateTimestamp();
+                        return;
+                    }
 
                     var html = '';
                     data.entries.forEach(function(entry, index) {
@@ -191,20 +211,32 @@
                             rankBadge += ' <span class="badge" style="background: #f59e0b; color: #000000; font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.35rem; border-radius: 3px; margin-left: 0.25rem; vertical-align: middle;">TIED</span>';
                         }
 
-                        var leadName = entry.teamLeadName || '';
+                        var uniqueId = escapeHtml(entry.uniqueId || '');
+                        var collegeName = escapeHtml(entry.collegeName || '');
+                        var leadName = escapeHtml(entry.teamLeadName || '');
 
                         html += '<tr class="' + rankClass + '">';
                         html += '<td>' + rankBadge + '</td>';
-                        html += '<td><strong style="color:var(--purple-700);">' + (entry.uniqueId || '') + '</strong></td>';
-                        html += '<td>' + (entry.collegeName || '') + '</td>';
+                        html += '<td><strong style="color:var(--purple-700);">' + uniqueId + '</strong></td>';
+                        html += '<td>' + collegeName + '</td>';
                         html += '<td>' + leadName + '</td>';
 
                         if (data.rounds) {
                             data.rounds.forEach(function(round) {
-                                var pts = entry.roundPoints ? entry.roundPoints[round.roundNumber] : null;
+                                var isFinished = (round.isFinished === true || round.finished === true);
+                                var roundNum = round.roundNumber;
+                                var pts = null;
+                                if (entry.roundPoints) {
+                                    if (entry.roundPoints[roundNum] !== undefined && entry.roundPoints[roundNum] !== null) {
+                                        pts = entry.roundPoints[roundNum];
+                                    } else if (entry.roundPoints[String(roundNum)] !== undefined && entry.roundPoints[String(roundNum)] !== null) {
+                                        pts = entry.roundPoints[String(roundNum)];
+                                    }
+                                }
+
                                 html += '<td style="text-align:center;">';
-                                if (round.finished && pts !== null && pts !== undefined) {
-                                    html += parseFloat(pts).toFixed(2);
+                                if (isFinished && pts !== null && pts !== undefined) {
+                                    html += formatScore(pts);
                                 } else {
                                     html += '<span style="color:var(--gray-400);">&mdash;</span>';
                                 }
@@ -214,7 +246,7 @@
 
                         var total = entry.totalPoints != null ? entry.totalPoints : 0;
                         html += '<td style="text-align:center;background:rgba(212,175,55,0.08);">';
-                        html += '<strong style="color:var(--gold-700);font-size:1.05rem;">' + parseFloat(total).toFixed(2) + '</strong>';
+                        html += '<strong style="color:var(--gold-700);font-size:1.05rem;">' + formatScore(total) + '</strong>';
                         html += '</td></tr>';
                     });
 
