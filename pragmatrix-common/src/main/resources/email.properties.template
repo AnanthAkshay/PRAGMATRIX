@@ -2,15 +2,19 @@
 # PRAGMATRIX 2026 — Email Delivery Configuration Template
 # ============================================================
 #
-# PRODUCTION / RENDER (Recommended: HTTPS Transactional Email API)
-# Set these in Render Environment tab or locally in email.properties:
+# PRODUCTION / RENDER (Brevo Transactional Email REST API)
+# Set these in Render Web Service Environment tab:
 #
-# EMAIL_API_KEY=re_your_resend_or_brevo_key
-# EMAIL_FROM_ADDRESS=onboarding@resend.dev (or your verified domain email)
-# EMAIL_FROM_NAME=PRAGMATRIX 2026
+# BREVO_API_KEY=xkeysib-your_brevo_v3_api_key
+# SENDER_EMAIL=pragmatrix2k26@gmail.com
+# SENDER_NAME=PRAGMATRIX 2026
+# PUBLIC_APP_URL=https://pragmatrix.onrender.com
 #
-# email.api.key=re_your_api_key
-# email.from.address=onboarding@resend.dev
+# ------------------------------------------------------------
+# LOCAL PROPERTIES FALLBACK (Optional)
+# ------------------------------------------------------------
+# brevo.api.key=xkeysib-your_brevo_v3_api_key
+# email.from.address=pragmatrix2k26@gmail.com
 # email.from.name=PRAGMATRIX 2026
 
 # ------------------------------------------------------------

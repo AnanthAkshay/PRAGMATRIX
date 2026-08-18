@@ -18,18 +18,14 @@ import java.util.Properties;
 /**
  * Enterprise Email Delivery Service for PRAGMATRIX 2026.
  * <p>
- * Supports both modern HTTPS-based Transactional Email APIs (Resend, Brevo, SendGrid,
- * or generic REST API) and legacy SMTP fallback.
- * </p>
- * <p>
- * HTTPS REST API delivery avoids port blocks (SMTP 25/465/587) on container platforms
- * like Render Free.
+ * Primary Delivery: Brevo Transactional Email REST API (https://api.brevo.com/v3/smtp/email)
+ * Fallback Delivery: SMTP (for local development or offline testing)
  * </p>
  * <p>
  * Configuration Precedence:
  * <ol>
- *   <li><b>HTTPS API via Environment Variables</b>: EMAIL_API_KEY / RESEND_API_KEY / BREVO_API_KEY / SENDGRID_API_KEY</li>
- *   <li><b>HTTPS API via Properties File</b>: {@code email.properties} ({@code email.api.key})</li>
+ *   <li><b>Brevo HTTPS API via Environment Variables</b>: BREVO_API_KEY / EMAIL_API_KEY</li>
+ *   <li><b>Brevo HTTPS API via Properties File</b>: {@code email.properties} ({@code brevo.api.key} / {@code email.api.key})</li>
  *   <li><b>SMTP via Environment Variables</b>: SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD</li>
  *   <li><b>SMTP via Properties File</b>: {@code email.properties}</li>
  * </ol>
@@ -38,13 +34,12 @@ import java.util.Properties;
 public class EmailService {
 
     public enum TransportMode {
-        HTTPS_RESEND,
         HTTPS_BREVO,
-        HTTPS_SENDGRID,
-        HTTPS_CUSTOM,
         SMTP,
         NONE
     }
+
+    private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -57,7 +52,6 @@ public class EmailService {
     // Resolved configuration
     private static TransportMode transportMode = TransportMode.NONE;
     private static String resolvedApiKey;
-    private static String resolvedApiUrl;
     private static String resolvedFromEmail;
     private static String resolvedFromName;
 
@@ -70,38 +64,33 @@ public class EmailService {
     private EmailService() {} // utility class
 
     /**
-     * Lazily load email configuration prioritizing HTTPS API environment variables.
+     * Lazily load email configuration prioritizing Brevo HTTPS API environment variables.
      */
     private static void loadConfig() {
         if (!initialized) {
             synchronized (LOCK) {
                 if (!initialized) {
-                    // 1. Probe HTTPS API Environment Variables
-                    String apiKey = getFromEnvOrSystem("EMAIL_API_KEY", "RESEND_API_KEY", "BREVO_API_KEY", "SENDINBLUE_API_KEY", "SENDGRID_API_KEY");
-                    String customApiUrl = getFromEnvOrSystem("EMAIL_API_URL");
-                    String providerHint = getFromEnvOrSystem("EMAIL_PROVIDER");
+                    // 1. Probe Brevo API Key Environment Variables
+                    String apiKey = getFromEnvOrSystem("BREVO_API_KEY", "EMAIL_API_KEY", "SENDINBLUE_API_KEY");
 
-                    // From Email & Name
-                    String fromEmail = getFromEnvOrSystem("EMAIL_FROM_ADDRESS", "EMAIL_FROM", "SMTP_FROM_EMAIL", "SMTP_FROM", "email.from.address");
-                    String fromName = getFromEnvOrSystem("EMAIL_FROM_NAME", "SMTP_FROM_NAME", "SMTP_NAME", "email.from.name");
+                    // 2. Probe Sender Email & Name
+                    String fromEmail = getFromEnvOrSystem("SENDER_EMAIL", "EMAIL_FROM_ADDRESS", "EMAIL_FROM", "SMTP_FROM_EMAIL", "SMTP_FROM", "email.from.address");
+                    String fromName = getFromEnvOrSystem("SENDER_NAME", "EMAIL_FROM_NAME", "SMTP_FROM_NAME", "SMTP_NAME", "email.from.name");
 
-                    // 2. Probe SMTP Environment Variables
+                    // 3. Probe SMTP Environment Variables
                     String host = getFromEnvOrSystem("SMTP_HOST", "email.smtp.host", "MAIL_HOST");
                     String port = getFromEnvOrSystem("SMTP_PORT", "email.smtp.port", "MAIL_PORT");
                     String smtpUser = getFromEnvOrSystem("SMTP_USERNAME", "EMAIL_USERNAME", "email.smtp.username", "MAIL_USERNAME");
                     String smtpPass = getFromEnvOrSystem("SMTP_PASSWORD", "EMAIL_PASSWORD", "email.smtp.password", "MAIL_PASSWORD");
 
-                    // 3. Fallback to email.properties if nothing in env
+                    // 4. Fallback to email.properties if nothing in env
                     if (apiKey == null && (smtpUser == null || smtpPass == null)) {
                         emailProps = loadFallbackProperties();
                         if (apiKey == null && emailProps != null) {
-                            apiKey = emailProps.getProperty("email.api.key");
+                            apiKey = emailProps.getProperty("brevo.api.key");
                             if (apiKey == null || apiKey.trim().isEmpty()) {
-                                apiKey = emailProps.getProperty("resend.api.key");
+                                apiKey = emailProps.getProperty("email.api.key");
                             }
-                        }
-                        if (customApiUrl == null && emailProps != null) {
-                            customApiUrl = emailProps.getProperty("email.api.url");
                         }
                         if (fromEmail == null && emailProps != null) {
                             fromEmail = emailProps.getProperty("email.from.address");
@@ -123,48 +112,26 @@ public class EmailService {
                         }
                     }
 
-                    // Resolve From details
+                    // Resolve From details with sensible defaults
                     resolvedFromName = (fromName != null && !fromName.trim().isEmpty()) ? fromName.trim() : "PRAGMATRIX 2026";
-                    resolvedFromEmail = (fromEmail != null && !fromEmail.trim().isEmpty()) ? fromEmail.trim() : "";
+                    resolvedFromEmail = (fromEmail != null && !fromEmail.trim().isEmpty()) ? fromEmail.trim() : "pragmatrix2k26@gmail.com";
 
                     System.out.println("================================================================================");
                     System.out.println("[PRAGMATRIX-EMAIL] Initialising Email Delivery Service...");
 
                     if (apiKey != null && !apiKey.trim().isEmpty()) {
                         resolvedApiKey = apiKey.trim();
+                        transportMode = TransportMode.HTTPS_BREVO;
 
-                        if (customApiUrl != null && !customApiUrl.trim().isEmpty()) {
-                            transportMode = TransportMode.HTTPS_CUSTOM;
-                            resolvedApiUrl = customApiUrl.trim();
-                        } else if ("brevo".equalsIgnoreCase(providerHint) || "sendinblue".equalsIgnoreCase(providerHint)
-                                || resolvedApiKey.startsWith("xkeysib-")
-                                || System.getenv("BREVO_API_KEY") != null
-                                || System.getenv("SENDINBLUE_API_KEY") != null) {
-                            transportMode = TransportMode.HTTPS_BREVO;
-                            resolvedApiUrl = "https://api.brevo.com/v3/smtp/email";
-                        } else if ("sendgrid".equalsIgnoreCase(providerHint)
-                                || resolvedApiKey.startsWith("SG.")
-                                || System.getenv("SENDGRID_API_KEY") != null) {
-                            transportMode = TransportMode.HTTPS_SENDGRID;
-                            resolvedApiUrl = "https://api.sendgrid.com/v3/mail/send";
-                        } else {
-                            // Default modern HTTPS provider: Resend
-                            transportMode = TransportMode.HTTPS_RESEND;
-                            resolvedApiUrl = "https://api.resend.com/emails";
-                            if (resolvedFromEmail.isEmpty()) {
-                                resolvedFromEmail = "onboarding@resend.dev";
-                            }
-                        }
+                        String maskedKey = resolvedApiKey.length() > 8
+                                ? resolvedApiKey.substring(0, 4) + "..." + resolvedApiKey.substring(resolvedApiKey.length() - 4) + " (length " + resolvedApiKey.length() + ")"
+                                : "[SET (length " + resolvedApiKey.length() + ")]";
 
-                        if (resolvedFromEmail.isEmpty()) {
-                            resolvedFromEmail = "pragmatrix2k26@gmail.com";
-                        }
-
-                        System.out.println("[PRAGMATRIX-EMAIL] Transport Mode       : HTTPS REST API (" + transportMode + ")");
-                        System.out.println("[PRAGMATRIX-EMAIL] API Endpoint         : " + resolvedApiUrl);
-                        System.out.println("[PRAGMATRIX-EMAIL] EMAIL_API_KEY        : [SET (length " + resolvedApiKey.length() + ")]");
-                        System.out.println("[PRAGMATRIX-EMAIL] EMAIL_FROM_ADDRESS   : " + resolvedFromEmail);
-                        System.out.println("[PRAGMATRIX-EMAIL] EMAIL_FROM_NAME      : " + resolvedFromName);
+                        System.out.println("[PRAGMATRIX-EMAIL] Transport Mode       : HTTPS REST API (Brevo v3)");
+                        System.out.println("[PRAGMATRIX-EMAIL] API Endpoint         : " + BREVO_API_URL);
+                        System.out.println("[PRAGMATRIX-EMAIL] BREVO_API_KEY        : " + maskedKey);
+                        System.out.println("[PRAGMATRIX-EMAIL] SENDER_EMAIL         : " + resolvedFromEmail);
+                        System.out.println("[PRAGMATRIX-EMAIL] SENDER_NAME          : " + resolvedFromName);
 
                     } else if (smtpUser != null && !smtpUser.trim().isEmpty() && smtpPass != null && !smtpPass.trim().isEmpty()) {
                         transportMode = TransportMode.SMTP;
@@ -181,12 +148,12 @@ public class EmailService {
                         System.out.println("[PRAGMATRIX-EMAIL] SMTP_PORT            : " + smtpPort);
                         System.out.println("[PRAGMATRIX-EMAIL] SMTP_USERNAME        : " + smtpUsername);
                         System.out.println("[PRAGMATRIX-EMAIL] SMTP_PASSWORD        : [SET (length " + smtpPassword.length() + ")]");
-                        System.out.println("[PRAGMATRIX-EMAIL] SMTP_FROM_EMAIL      : " + resolvedFromEmail);
-                        System.out.println("[PRAGMATRIX-EMAIL] SMTP_FROM_NAME       : " + resolvedFromName);
+                        System.out.println("[PRAGMATRIX-EMAIL] SENDER_EMAIL         : " + resolvedFromEmail);
+                        System.out.println("[PRAGMATRIX-EMAIL] SENDER_NAME          : " + resolvedFromName);
 
                     } else {
                         transportMode = TransportMode.NONE;
-                        System.out.println("[PRAGMATRIX-EMAIL] Transport Mode       : NONE (No EMAIL_API_KEY or SMTP credentials provided)");
+                        System.out.println("[PRAGMATRIX-EMAIL] Transport Mode       : NONE (No BREVO_API_KEY or SMTP credentials provided)");
                     }
 
                     System.out.println("================================================================================");
@@ -230,8 +197,14 @@ public class EmailService {
      * Send registration confirmation email to a team lead.
      */
     public static boolean sendRegistrationConfirmationEmail(String toEmail, String teamLeadName, String collegeName, String quizName, String teamCode) {
+        String publicAppUrl = getFromEnvOrSystem("PUBLIC_APP_URL", "APP_URL");
+        if (publicAppUrl == null || publicAppUrl.trim().isEmpty()) {
+            publicAppUrl = "https://pragmatrix.onrender.com";
+        }
+
         String subject = "PRAGMATRIX 2026 \u2013 Registration Confirmed (" + teamCode + ")";
-        String body = "Dear " + (teamLeadName != null && !teamLeadName.isEmpty() ? teamLeadName : "Team Lead") + ",\n\n"
+
+        String textBody = "Dear " + (teamLeadName != null && !teamLeadName.isEmpty() ? teamLeadName : "Team Lead") + ",\n\n"
                 + "Greetings from Team PRAGMATRIX 2026!\n\n"
                 + "We are pleased to inform you that your registration for PRAGMATRIX 2026 \u2013 Applied\n"
                 + "Management Carnival, organized by the Post Graduate Department of Business Administration,\n"
@@ -244,7 +217,8 @@ public class EmailService {
                 + "Team Code:   " + teamCode + "\n"
                 + "--------------------------------------------------\n\n"
                 + "Your Team Code (" + teamCode + ") is your login credential to check your live\n"
-                + "status, round results, and score updates on the PRAGMATRIX portal.\n\n"
+                + "status, round results, and score updates on the PRAGMATRIX portal:\n"
+                + publicAppUrl + "\n\n"
                 + "Event Schedule:\n"
                 + "Date:  24th August 2026\n"
                 + "Time:  9:00 A.M. onwards\n"
@@ -255,7 +229,40 @@ public class EmailService {
                 + "Post Graduate Department of Business Administration\n"
                 + "Seshadripuram College, Bengaluru";
 
-        return sendEmail(toEmail, subject, body);
+        String htmlBody = "<!DOCTYPE html><html><body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333;\">"
+                + "<div style=\"max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;\">"
+                + "<div style=\"text-align: center; margin-bottom: 20px;\">"
+                + "<h2 style=\"color: #1a1a2e; margin: 0;\">PRAGMATRIX 2026</h2>"
+                + "<p style=\"color: #d4af37; font-weight: bold; margin: 5px 0;\">Applied Management Carnival</p>"
+                + "<p style=\"font-size: 12px; color: #666; margin: 0;\">Seshadripuram College, Bengaluru</p>"
+                + "</div>"
+                + "<hr style=\"border: none; border-top: 1px solid #eee; margin: 20px 0;\">"
+                + "<p>Dear <strong>" + (teamLeadName != null && !teamLeadName.isEmpty() ? teamLeadName : "Team Lead") + "</strong>,</p>"
+                + "<p>Greetings from Team PRAGMATRIX 2026!</p>"
+                + "<p>We are pleased to inform you that your registration for <strong>PRAGMATRIX 2026</strong> has been successfully confirmed.</p>"
+                + "<div style=\"background: #f8f9fa; border-left: 4px solid #d4af37; padding: 15px; margin: 20px 0; border-radius: 4px;\">"
+                + "<h3 style=\"margin-top: 0; color: #1a1a2e; font-size: 16px;\">Registration Details</h3>"
+                + "<table style=\"width: 100%; border-collapse: collapse; font-size: 14px;\">"
+                + "<tr><td style=\"padding: 4px 0; color: #666; width: 120px;\">Event:</td><td><strong>" + quizName + "</strong></td></tr>"
+                + "<tr><td style=\"padding: 4px 0; color: #666;\">College:</td><td><strong>" + collegeName + "</strong></td></tr>"
+                + "<tr><td style=\"padding: 4px 0; color: #666;\">Team Lead:</td><td><strong>" + teamLeadName + "</strong></td></tr>"
+                + "<tr><td style=\"padding: 4px 0; color: #666;\">Team Code:</td><td><strong style=\"color: #4a154b; font-size: 16px;\">" + teamCode + "</strong></td></tr>"
+                + "</table>"
+                + "</div>"
+                + "<p>Your <strong>Team Code (" + teamCode + ")</strong> is your credential to log in and monitor your live scores and standings on the portal:</p>"
+                + "<p style=\"text-align: center; margin: 25px 0;\">"
+                + "<a href=\"" + publicAppUrl + "\" style=\"background: #1a1a2e; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;\">Access Team Portal</a>"
+                + "</p>"
+                + "<p style=\"font-size: 13px; color: #555;\"><strong>Event Schedule:</strong><br>"
+                + "Date: 24th August 2026 | Time: 9:00 A.M. onwards<br>"
+                + "Venue: Conference Hall, Seshadripuram College, Bengaluru</p>"
+                + "<hr style=\"border: none; border-top: 1px solid #eee; margin: 20px 0;\">"
+                + "<p style=\"font-size: 12px; color: #888; text-align: center;\">"
+                + "Warm regards,<br><strong>Team PRAGMATRIX 2026</strong><br>Post Graduate Department of Business Administration, Seshadripuram College"
+                + "</p>"
+                + "</div></body></html>";
+
+        return sendEmail(toEmail, subject, textBody, htmlBody);
     }
 
     /**
@@ -270,20 +277,39 @@ public class EmailService {
      */
     public static boolean sendAdminOtpEmail(String toEmail, String otpCode) {
         String subject = "PRAGMATRIX 2026 Admin Login OTP";
-        String body = "Dear Admin,\n\n"
+
+        String textBody = "Dear Admin,\n\n"
                 + "Your 6-digit OTP for PRAGMATRIX 2026 Admin Login is:\n\n"
                 + "      " + otpCode + "\n\n"
                 + "This OTP is valid for 5 minutes. Do not share this code with anyone.\n\n"
                 + "If you did not request this login code, please ignore this email.\n\n"
                 + "Warm regards,\n"
                 + "Team PRAGMATRIX 2026";
-        return sendEmail(toEmail, subject, body);
+
+        String htmlBody = "<!DOCTYPE html><html><body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333;\">"
+                + "<div style=\"max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;\">"
+                + "<div style=\"text-align: center; margin-bottom: 20px;\">"
+                + "<h2 style=\"color: #1a1a2e; margin: 0;\">PRAGMATRIX 2026</h2>"
+                + "<p style=\"color: #d4af37; font-weight: bold; margin: 5px 0;\">Admin Portal Authentication</p>"
+                + "</div>"
+                + "<p>Dear Admin,</p>"
+                + "<p>Your 6-digit One-Time Password (OTP) for admin dashboard login is:</p>"
+                + "<div style=\"background: #f4f4f6; text-align: center; padding: 18px; margin: 20px 0; border-radius: 6px; letter-spacing: 6px; font-size: 28px; font-weight: bold; color: #4a154b;\">"
+                + otpCode
+                + "</div>"
+                + "<p style=\"font-size: 13px; color: #666;\">This OTP is valid for <strong>5 minutes</strong>. Do not share this code with anyone.</p>"
+                + "<p style=\"font-size: 12px; color: #999;\">If you did not request this login code, please ignore this email or contact the administrator.</p>"
+                + "<hr style=\"border: none; border-top: 1px solid #eee; margin: 20px 0;\">"
+                + "<p style=\"font-size: 12px; color: #888; text-align: center;\">Team PRAGMATRIX 2026</p>"
+                + "</div></body></html>";
+
+        return sendEmail(toEmail, subject, textBody, htmlBody);
     }
 
     /**
-     * Core email dispatch router (routes to HTTPS API or SMTP fallback).
+     * Core email dispatch router (routes to Brevo HTTPS API or SMTP fallback).
      */
-    private static boolean sendEmail(String toEmail, String subject, String body) {
+    private static boolean sendEmail(String toEmail, String subject, String textBody, String htmlBody) {
         if (toEmail == null || toEmail.trim().isEmpty()) {
             System.err.println("[PRAGMATRIX-EMAIL] Cannot send email: recipient address is empty.");
             return false;
@@ -292,49 +318,51 @@ public class EmailService {
         loadConfig();
 
         if (transportMode == TransportMode.NONE) {
-            System.err.println("[PRAGMATRIX-EMAIL] Email service unconfigured (no EMAIL_API_KEY or SMTP credentials). Skipping send to: " + toEmail);
+            System.err.println("[PRAGMATRIX-EMAIL] Email service unconfigured (no BREVO_API_KEY or SMTP credentials). Skipping send to: " + toEmail);
             return false;
         }
 
         if (transportMode == TransportMode.SMTP) {
-            return sendViaSmtp(toEmail.trim(), subject, body);
+            return sendViaSmtp(toEmail.trim(), subject, textBody, htmlBody);
         } else {
-            return sendViaHttpsApi(toEmail.trim(), subject, body);
+            return sendViaBrevoApi(toEmail.trim(), subject, textBody, htmlBody);
         }
     }
 
     /**
-     * Dispatches email via HTTPS REST API with 10s connect and 15s request timeouts.
+     * Dispatches email via Brevo Transactional Email REST API.
+     * POST https://api.brevo.com/v3/smtp/email
      */
-    private static boolean sendViaHttpsApi(String toEmail, String subject, String body) {
+    private static boolean sendViaBrevoApi(String toEmail, String subject, String textBody, String htmlBody) {
         try {
-            HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
-                    .uri(URI.create(resolvedApiUrl))
-                    .timeout(Duration.ofSeconds(15))
-                    .header("Content-Type", "application/json");
+            JsonObject payload = new JsonObject();
 
-            JsonObject payload;
+            // Sender object: {"name": "<SENDER_NAME>", "email": "<SENDER_EMAIL>"}
+            JsonObject sender = new JsonObject();
+            sender.addProperty("name", resolvedFromName);
+            sender.addProperty("email", resolvedFromEmail);
+            payload.add("sender", sender);
 
-            switch (transportMode) {
-                case HTTPS_BREVO:
-                    reqBuilder.header("api-key", resolvedApiKey);
-                    payload = buildBrevoPayload(toEmail, subject, body);
-                    break;
+            // To array: [{"email": "<recipient>"}]
+            JsonArray toArray = new JsonArray();
+            JsonObject recipient = new JsonObject();
+            recipient.addProperty("email", toEmail);
+            toArray.add(recipient);
+            payload.add("to", toArray);
 
-                case HTTPS_SENDGRID:
-                    reqBuilder.header("Authorization", "Bearer " + resolvedApiKey);
-                    payload = buildSendGridPayload(toEmail, subject, body);
-                    break;
-
-                case HTTPS_RESEND:
-                case HTTPS_CUSTOM:
-                default:
-                    reqBuilder.header("Authorization", "Bearer " + resolvedApiKey);
-                    payload = buildResendPayload(toEmail, subject, body);
-                    break;
+            // Subject and HTML Content
+            payload.addProperty("subject", subject);
+            payload.addProperty("htmlContent", (htmlBody != null && !htmlBody.isEmpty()) ? htmlBody : "<p>" + textBody.replace("\n", "<br>") + "</p>");
+            if (textBody != null && !textBody.isEmpty()) {
+                payload.addProperty("textContent", textBody);
             }
 
-            HttpRequest request = reqBuilder
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BREVO_API_URL))
+                    .timeout(Duration.ofSeconds(15))
+                    .header("accept", "application/json")
+                    .header("api-key", resolvedApiKey)
+                    .header("content-type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(payload.toString(), StandardCharsets.UTF_8))
                     .build();
 
@@ -342,89 +370,24 @@ public class EmailService {
             int statusCode = response.statusCode();
 
             if (statusCode >= 200 && statusCode < 300) {
-                System.out.println("[PRAGMATRIX-EMAIL] Email sent successfully via HTTPS API (" + transportMode + ") to: " + toEmail + " [HTTP " + statusCode + "]");
+                System.out.println("[PRAGMATRIX-EMAIL] Email sent successfully via Brevo API to: " + toEmail + " [HTTP " + statusCode + "]");
                 return true;
             } else {
-                System.err.println("[PRAGMATRIX-EMAIL] HTTPS email dispatch failed for " + toEmail + " [HTTP " + statusCode + "]: " + response.body());
+                System.err.println("[PRAGMATRIX-EMAIL] Brevo API email dispatch failed for " + toEmail + " [HTTP " + statusCode + "]: " + response.body());
                 return false;
             }
 
         } catch (Exception e) {
-            System.err.println("[PRAGMATRIX-EMAIL] HTTPS email exception for " + toEmail + ": " + e.getMessage());
+            System.err.println("[PRAGMATRIX-EMAIL] Brevo API email exception for " + toEmail + ": " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
-    private static JsonObject buildResendPayload(String toEmail, String subject, String body) {
-        JsonObject json = new JsonObject();
-        String fromHeader = (resolvedFromName != null && !resolvedFromName.isEmpty())
-                ? resolvedFromName + " <" + resolvedFromEmail + ">"
-                : resolvedFromEmail;
-        json.addProperty("from", fromHeader);
-
-        JsonArray toArray = new JsonArray();
-        toArray.add(toEmail);
-        json.add("to", toArray);
-
-        json.addProperty("subject", subject);
-        json.addProperty("text", body);
-        return json;
-    }
-
-    private static JsonObject buildBrevoPayload(String toEmail, String subject, String body) {
-        JsonObject json = new JsonObject();
-
-        JsonObject sender = new JsonObject();
-        sender.addProperty("name", resolvedFromName);
-        sender.addProperty("email", resolvedFromEmail);
-        json.add("sender", sender);
-
-        JsonArray toArray = new JsonArray();
-        JsonObject recipient = new JsonObject();
-        recipient.addProperty("email", toEmail);
-        toArray.add(recipient);
-        json.add("to", toArray);
-
-        json.addProperty("subject", subject);
-        json.addProperty("textContent", body);
-        return json;
-    }
-
-    private static JsonObject buildSendGridPayload(String toEmail, String subject, String body) {
-        JsonObject json = new JsonObject();
-
-        JsonArray personalizations = new JsonArray();
-        JsonObject p = new JsonObject();
-        JsonArray toArray = new JsonArray();
-        JsonObject recipient = new JsonObject();
-        recipient.addProperty("email", toEmail);
-        toArray.add(recipient);
-        p.add("to", toArray);
-        personalizations.add(p);
-        json.add("personalizations", personalizations);
-
-        JsonObject fromObj = new JsonObject();
-        fromObj.addProperty("email", resolvedFromEmail);
-        fromObj.addProperty("name", resolvedFromName);
-        json.add("from", fromObj);
-
-        json.addProperty("subject", subject);
-
-        JsonArray contentArray = new JsonArray();
-        JsonObject c = new JsonObject();
-        c.addProperty("type", "text/plain");
-        c.addProperty("value", body);
-        contentArray.add(c);
-        json.add("content", contentArray);
-
-        return json;
-    }
-
     /**
-     * Fallback SMTP sender (if HTTPS API is not configured).
+     * Fallback SMTP sender (if Brevo API key is not configured).
      */
-    private static boolean sendViaSmtp(String toEmail, String subject, String body) {
+    private static boolean sendViaSmtp(String toEmail, String subject, String textBody, String htmlBody) {
         try {
             Properties mailProps = new Properties();
             mailProps.put("mail.smtp.auth", "true");
@@ -449,7 +412,22 @@ public class EmailService {
             message.setFrom(new InternetAddress(resolvedFromEmail, resolvedFromName));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
             message.setSubject(subject);
-            message.setText(body);
+
+            if (htmlBody != null && !htmlBody.isEmpty()) {
+                MimeMultipart multipart = new MimeMultipart("alternative");
+
+                MimeBodyPart textPart = new MimeBodyPart();
+                textPart.setText(textBody, "utf-8");
+                multipart.addBodyPart(textPart);
+
+                MimeBodyPart htmlPart = new MimeBodyPart();
+                htmlPart.setContent(htmlBody, "text/html; charset=utf-8");
+                multipart.addBodyPart(htmlPart);
+
+                message.setContent(multipart);
+            } else {
+                message.setText(textBody);
+            }
 
             Transport.send(message);
 

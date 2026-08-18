@@ -36,7 +36,20 @@ Configure these environment variables in your Render Web Service settings (under
 | `DB_POOL_MIN_IDLE` | *(Optional)* Minimum idle connections | `2` |
 | `DB_POOL_TIMEOUT` | *(Optional)* Connection acquisition timeout (ms) | `30000` |
 
-### B. Email / SMTP Configuration (Jakarta Mail)
+### B. Transactional Email API (Brevo HTTPS REST API)
+
+Render container environments may restrict outbound SMTP ports (25, 465, 587). PRAGMATRIX 2026 uses **Brevo Transactional Email REST API** over HTTPS (`POST https://api.brevo.com/v3/smtp/email`) by default.
+
+| Variable | Description | Example / Default |
+|---|---|---|
+| `BREVO_API_KEY` | Brevo v3 Transactional API Key *(Primary)* | `xkeysib-xxxxxxxxxxxxxxxxxxxx` |
+| `SENDER_EMAIL` | Verified Sender Email Address in Brevo | `pragmatrix2k26@gmail.com` |
+| `SENDER_NAME` | Sender Display Name | `PRAGMATRIX 2026` |
+| `PUBLIC_APP_URL` | Public Portal URL (included in registration emails) | `https://pragmatrix.onrender.com` |
+
+*(Note: `EMAIL_FROM_ADDRESS` and `EMAIL_FROM_NAME` are also supported as aliases for `SENDER_EMAIL` and `SENDER_NAME`)*
+
+#### SMTP Fallback (Optional / Local Dev Only)
 
 | Variable | Description | Example / Default |
 |---|---|---|
@@ -44,10 +57,6 @@ Configure these environment variables in your Render Web Service settings (under
 | `SMTP_PORT` | SMTP Server Port | `587` (STARTTLS) or `465` (SSL) |
 | `SMTP_USERNAME` | SMTP User / Email | `your-email@gmail.com` |
 | `SMTP_PASSWORD` | SMTP App Password / Token | *(16-character Google App Password)* |
-| `SMTP_AUTH` | SMTP Authentication Enabled | `true` |
-| `SMTP_STARTTLS` | STARTTLS Enabled | `true` |
-| `SMTP_FROM_EMAIL` | Sender Email Address | `noreply@pragmatrix.com` |
-| `SMTP_FROM_NAME` | Sender Display Name | `PRAGMATRIX 2026` |
 
 ### C. Web Service Port Configuration
 
@@ -68,7 +77,7 @@ Configure these environment variables in your Render Web Service settings (under
    - **Dockerfile Path**: `Dockerfile.public`
    - **Docker Build Context**: `.` (root directory)
    - **Health Check Path**: `/health`
-4. Add all environment variables listed in Section 2 (Database, SMTP, and `ADMIN_PORTAL_URL`).
+4. Add all environment variables listed in Section 2 (Database, Brevo, and `PUBLIC_APP_URL`).
 5. Click **Create Web Service**.
 
 ### Service 2: Admin App (Dashboard & Scoring)
@@ -80,7 +89,7 @@ Configure these environment variables in your Render Web Service settings (under
    - **Dockerfile Path**: `Dockerfile.admin`
    - **Docker Build Context**: `.` (root directory)
    - **Health Check Path**: `/health`
-4. Add all environment variables listed in Section 2 (Database and SMTP).
+4. Add all environment variables listed in Section 2 (Database, Brevo, and `PUBLIC_APP_URL`).
 5. Click **Create Web Service**.
 
 ---
@@ -102,6 +111,10 @@ docker run -p 8080:8080 \
   -e DB_NAME="defaultdb" \
   -e DB_USER="avnadmin" \
   -e DB_PASSWORD="<YOUR_AIVEN_PASSWORD>" \
+  -e BREVO_API_KEY="<YOUR_BREVO_KEY>" \
+  -e SENDER_EMAIL="pragmatrix2k26@gmail.com" \
+  -e SENDER_NAME="PRAGMATRIX 2026" \
+  -e PUBLIC_APP_URL="http://localhost:8080" \
   pragmatrix-public
 ```
 - Access at: `http://localhost:8080/`
@@ -122,6 +135,9 @@ docker run -p 8081:8080 \
   -e DB_NAME="defaultdb" \
   -e DB_USER="avnadmin" \
   -e DB_PASSWORD="<YOUR_AIVEN_PASSWORD>" \
+  -e BREVO_API_KEY="<YOUR_BREVO_KEY>" \
+  -e SENDER_EMAIL="pragmatrix2k26@gmail.com" \
+  -e SENDER_NAME="PRAGMATRIX 2026" \
   pragmatrix-admin
 ```
 - Access at: `http://localhost:8081/` (or `http://localhost:8081/login`)
