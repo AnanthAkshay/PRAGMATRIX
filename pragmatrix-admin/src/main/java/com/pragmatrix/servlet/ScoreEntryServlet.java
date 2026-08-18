@@ -52,6 +52,16 @@ public class ScoreEntryServlet extends HttpServlet {
             List<Team> teams = teamDAO.findByQuizCode(round.getQuizCode());
             Map<String, Score> existingScores = scoreDAO.findByRound(roundId);
 
+            if ("BIZWIZX".equalsIgnoreCase(round.getQuizCode()) && round.getRoundNumber() > 1) {
+                List<Team> eligibleTeams = new ArrayList<>();
+                for (Team t : teams) {
+                    if (!t.isEliminated() || existingScores.containsKey(t.getUniqueId())) {
+                        eligibleTeams.add(t);
+                    }
+                }
+                teams = eligibleTeams;
+            }
+
             req.setAttribute("round", round);
             req.setAttribute("teams", teams);
             req.setAttribute("existingScores", existingScores);
@@ -157,6 +167,9 @@ public class ScoreEntryServlet extends HttpServlet {
                 // BIZWIZX Simple Score Entry
                 List<Score> scores = new ArrayList<>();
                 for (Team team : teams) {
+                    if (round.getRoundNumber() > 1 && team.isEliminated()) {
+                        continue;
+                    }
                     String pointsStr = req.getParameter("score_" + team.getUniqueId());
                     if (pointsStr != null && !pointsStr.trim().isEmpty()) {
                         try {

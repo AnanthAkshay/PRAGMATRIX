@@ -63,7 +63,8 @@ public class TeamDAO {
      * Find a team by its unique ID.
      */
     public Team findByUniqueId(String uniqueId) throws SQLException {
-        String sql = "SELECT unique_id, quiz_code, college_name, team_lead_name, lead_email, registered_at "
+        String sql = "SELECT unique_id, quiz_code, college_name, team_lead_name, lead_email, "
+                   + "is_eliminated, advanced_to_finale, registered_at "
                    + "FROM teams WHERE unique_id = ?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -100,13 +101,44 @@ public class TeamDAO {
      */
     public List<Team> findByQuizCode(String quizCode) throws SQLException {
         List<Team> list = new ArrayList<>();
-        String sql = "SELECT t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, t.registered_at, "
+        String sql = "SELECT t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, "
+                   + "t.is_eliminated, t.advanced_to_finale, t.registered_at, "
                    + "COALESCE(SUM(CASE WHEN r.is_finished = TRUE THEN s.points ELSE 0 END), 0) AS total_points "
                    + "FROM teams t "
                    + "LEFT JOIN scores s ON t.unique_id = s.unique_id "
                    + "LEFT JOIN rounds r ON s.round_id = r.round_id "
                    + "WHERE t.quiz_code = ? "
-                   + "GROUP BY t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, t.registered_at "
+                   + "GROUP BY t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, "
+                   + "t.is_eliminated, t.advanced_to_finale, t.registered_at "
+                   + "ORDER BY t.unique_id";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, quizCode);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Team t = mapRow(rs);
+                    t.setTotalPoints(rs.getDouble("total_points"));
+                    list.add(t);
+                }
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Find only active (non-eliminated) teams for a specific quiz.
+     */
+    public List<Team> findActiveTeamsByQuizCode(String quizCode) throws SQLException {
+        List<Team> list = new ArrayList<>();
+        String sql = "SELECT t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, "
+                   + "t.is_eliminated, t.advanced_to_finale, t.registered_at, "
+                   + "COALESCE(SUM(CASE WHEN r.is_finished = TRUE THEN s.points ELSE 0 END), 0) AS total_points "
+                   + "FROM teams t "
+                   + "LEFT JOIN scores s ON t.unique_id = s.unique_id "
+                   + "LEFT JOIN rounds r ON s.round_id = r.round_id "
+                   + "WHERE t.quiz_code = ? AND t.is_eliminated = FALSE "
+                   + "GROUP BY t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, "
+                   + "t.is_eliminated, t.advanced_to_finale, t.registered_at "
                    + "ORDER BY t.unique_id";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -127,13 +159,15 @@ public class TeamDAO {
      */
     public List<Team> searchTeams(String quizCode, String query) throws SQLException {
         List<Team> list = new ArrayList<>();
-        String sql = "SELECT t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, t.registered_at, "
+        String sql = "SELECT t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, "
+                   + "t.is_eliminated, t.advanced_to_finale, t.registered_at, "
                    + "COALESCE(SUM(CASE WHEN r.is_finished = TRUE THEN s.points ELSE 0 END), 0) AS total_points "
                    + "FROM teams t "
                    + "LEFT JOIN scores s ON t.unique_id = s.unique_id "
                    + "LEFT JOIN rounds r ON s.round_id = r.round_id "
                    + "WHERE t.quiz_code = ? AND (t.unique_id LIKE ? OR t.college_name LIKE ?) "
-                   + "GROUP BY t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, t.registered_at "
+                   + "GROUP BY t.unique_id, t.quiz_code, t.college_name, t.team_lead_name, t.lead_email, "
+                   + "t.is_eliminated, t.advanced_to_finale, t.registered_at "
                    + "ORDER BY t.unique_id";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -150,6 +184,66 @@ public class TeamDAO {
             }
         }
         return list;
+    }
+
+    /**
+     * Update elimination status for a single team.
+     */
+    public boolean updateEliminationStatus(String uniqueId, boolean isEliminated) throws SQLException {
+        String sql = "UPDATE teams SET is_eliminated = ? WHERE unique_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBoolean(1, isEliminated);
+            ps.setString(2, uniqueId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Update elimination status for multiple teams in batch.
+     */
+    public void updateEliminationStatusBatch(List<String> uniqueIds, boolean isEliminated) throws SQLException {
+        if (uniqueIds == null || uniqueIds.isEmpty()) return;
+        String sql = "UPDATE teams SET is_eliminated = ? WHERE unique_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            for (String uid : uniqueIds) {
+                ps.setBoolean(1, isEliminated);
+                ps.setString(2, uid);
+                ps.addBatch();
+            }
+            ps.executeBatch();
+        }
+    }
+
+    /**
+     * Update finale advancement flag for a team.
+     */
+    public boolean updateFinaleAdvancement(String uniqueId, boolean advanced) throws SQLException {
+        String sql = "UPDATE teams SET advanced_to_finale = ? WHERE unique_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBoolean(1, advanced);
+            ps.setString(2, uniqueId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    /**
+     * Update finale advancement flag for multiple teams.
+     */
+    public void updateFinaleAdvancementBatch(List<String> uniqueIds, boolean advanced) throws SQLException {
+        if (uniqueIds == null || uniqueIds.isEmpty()) return;
+        String sql = "UPDATE teams SET advanced_to_finale = ? WHERE unique_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            for (String uid : uniqueIds) {
+                ps.setBoolean(1, advanced);
+                ps.setString(2, uid);
+                ps.addBatch();
+            }
+            ps.executeBatch();
+        }
     }
 
     /**
@@ -187,6 +281,12 @@ public class TeamDAO {
         t.setTeamLeadName(rs.getString("team_lead_name"));
         t.setLeadEmail(rs.getString("lead_email"));
         t.setRegisteredAt(rs.getTimestamp("registered_at"));
+        try {
+            t.setEliminated(rs.getBoolean("is_eliminated"));
+        } catch (SQLException ignored) {}
+        try {
+            t.setAdvancedToFinale(rs.getBoolean("advanced_to_finale"));
+        } catch (SQLException ignored) {}
         return t;
     }
 }

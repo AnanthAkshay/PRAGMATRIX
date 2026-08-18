@@ -52,6 +52,13 @@ public class AppContextListener implements ServletContextListener {
         } catch (Exception e) {
             System.err.println("[PRAGMATRIX] Note: VORTEX Round 4 name check: " + e.getMessage());
         }
+
+        // Ensure is_eliminated and advanced_to_finale columns exist on teams table
+        try {
+            ensureTeamColumns();
+        } catch (Exception e) {
+            System.err.println("[PRAGMATRIX] Note: Team columns check: " + e.getMessage());
+        }
     }
 
     @Override
@@ -151,6 +158,29 @@ public class AppContextListener implements ServletContextListener {
             System.out.println("[PRAGMATRIX] VORTEX Round 4 name verified/updated to GRAND FINALE.");
         } catch (Exception e) {
             System.err.println("[PRAGMATRIX] Note: Could not update VORTEX round names: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Ensures is_eliminated and advanced_to_finale columns exist on teams table.
+     */
+    private void ensureTeamColumns() {
+        try (java.sql.Connection conn = DBConnection.getConnection();
+             java.sql.Statement stmt = conn.createStatement()) {
+            try {
+                stmt.executeUpdate("ALTER TABLE teams ADD COLUMN is_eliminated BOOLEAN NOT NULL DEFAULT FALSE");
+                System.out.println("[PRAGMATRIX] Added is_eliminated column to teams table.");
+            } catch (SQLException ignored) {
+                // Column already exists
+            }
+            try {
+                stmt.executeUpdate("ALTER TABLE teams ADD COLUMN advanced_to_finale BOOLEAN NOT NULL DEFAULT FALSE");
+                System.out.println("[PRAGMATRIX] Added advanced_to_finale column to teams table.");
+            } catch (SQLException ignored) {
+                // Column already exists
+            }
+        } catch (Exception e) {
+            System.err.println("[PRAGMATRIX] Note: Could not check/add team columns: " + e.getMessage());
         }
     }
 }

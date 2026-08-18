@@ -127,6 +127,16 @@
                     <div class="info-label">Team Lead</div>
                     <div class="info-value"><c:out value="${team.teamLeadName}"/></div>
                 </div>
+                <c:if test="${team.eliminated}">
+                    <div class="team-info-item" id="team-status-item">
+                        <div class="info-label">Status</div>
+                        <div class="info-value">
+                            <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.85rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 600;">
+                                Eliminated
+                            </span>
+                        </div>
+                    </div>
+                </c:if>
             </div>
         </div>
 

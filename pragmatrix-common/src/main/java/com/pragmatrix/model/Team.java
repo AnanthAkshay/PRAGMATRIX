@@ -13,6 +13,9 @@ public class Team {
     private String leadEmail;
     private Timestamp registeredAt;
 
+    private boolean eliminated;
+    private boolean advancedToFinale;
+
     /** Transient field: total points (populated by leaderboard queries). */
     private double totalPoints;
 
@@ -39,6 +42,12 @@ public class Team {
 
     public String getLeadEmail() { return leadEmail; }
     public void setLeadEmail(String leadEmail) { this.leadEmail = leadEmail; }
+
+    public boolean isEliminated() { return eliminated; }
+    public void setEliminated(boolean eliminated) { this.eliminated = eliminated; }
+
+    public boolean isAdvancedToFinale() { return advancedToFinale; }
+    public void setAdvancedToFinale(boolean advancedToFinale) { this.advancedToFinale = advancedToFinale; }
 
     public Timestamp getRegisteredAt() { return registeredAt; }
     public void setRegisteredAt(Timestamp registeredAt) { this.registeredAt = registeredAt; }

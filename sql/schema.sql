@@ -34,12 +34,14 @@ CREATE TABLE IF NOT EXISTS quizzes (
 -- Teams / participants
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS teams (
-    unique_id       VARCHAR(15)  PRIMARY KEY,
-    quiz_code       VARCHAR(10)  NOT NULL,
-    college_name    VARCHAR(150) NOT NULL,
-    team_lead_name  VARCHAR(100) NOT NULL,
-    lead_email      VARCHAR(150) NOT NULL,
-    registered_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    unique_id          VARCHAR(15)  PRIMARY KEY,
+    quiz_code          VARCHAR(10)  NOT NULL,
+    college_name       VARCHAR(150) NOT NULL,
+    team_lead_name     VARCHAR(100) NOT NULL,
+    lead_email         VARCHAR(150) NOT NULL,
+    is_eliminated      BOOLEAN      NOT NULL DEFAULT FALSE,
+    advanced_to_finale BOOLEAN      NOT NULL DEFAULT FALSE,
+    registered_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_teams_quiz (quiz_code),
     INDEX idx_teams_college (college_name),
     FOREIGN KEY (quiz_code) REFERENCES quizzes(quiz_code)

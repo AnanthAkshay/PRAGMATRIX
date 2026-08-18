@@ -253,6 +253,12 @@
                                 </a>
                             </c:if>
 
+                            <c:if test="${selectedQuiz == 'BIZWIZX' && round.finished && (round.roundNumber == 2 || round.roundNumber == 3)}">
+                                <button type="button" class="btn btn-warning btn-sm" onclick="openEliminationModal(${round.roundNumber}, '<c:out value="${round.roundName}"/>')" id="btn-eliminate-r${round.roundNumber}" style="background: #ea580c; color: white; border-color: #ea580c;">
+                                    Eliminate Teams
+                                </button>
+                            </c:if>
+
                             <c:if test="${!round.finished}">
                                 <button type="button" class="btn btn-outline btn-sm" onclick="toggleEdit(${round.roundId})" id="btn-edit-${round.roundId}">
                                     Edit
@@ -311,6 +317,7 @@
                             <th>Team Lead</th>
                             <th>Lead Email</th>
                             <th>Total Points</th>
+                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -328,11 +335,53 @@
                                     </strong>
                                 </td>
                                 <td>
+                                    <c:choose>
+                                        <c:when test="${team.eliminated}">
+                                            <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600;">
+                                                Eliminated
+                                            </span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #16a34a; border: 1px solid rgba(34, 197, 94, 0.3); font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600;">
+                                                Active
+                                            </span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </td>
+                                <td>
                                     <div class="d-flex gap-sm">
                                         <a href="${pageContext.request.contextPath}/admin/scorecard?id=${team.uniqueId}"
                                            class="btn btn-outline btn-sm" title="View Scorecard">
                                             Scorecard
                                         </a>
+                                        <c:if test="${selectedQuiz == 'BIZWIZX'}">
+                                            <c:choose>
+                                                <c:when test="${team.eliminated}">
+                                                    <form action="${pageContext.request.contextPath}/admin/eliminate-teams" method="POST" style="display:inline;">
+                                                        <input type="hidden" name="uniqueId" value="${team.uniqueId}">
+                                                        <input type="hidden" name="quizCode" value="${selectedQuiz}">
+                                                        <input type="hidden" name="action" value="restore">
+                                                        <button type="submit" class="btn btn-sm btn-outline" title="Restore Team to Active"
+                                                                style="padding: 0.3rem 0.6rem; font-size: 0.75rem; color: #16a34a; border-color: #16a34a;"
+                                                                onclick="return confirm('Restore team ${team.uniqueId} (${team.collegeName}) to Active?')">
+                                                            Restore
+                                                        </button>
+                                                    </form>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <form action="${pageContext.request.contextPath}/admin/eliminate-teams" method="POST" style="display:inline;">
+                                                        <input type="hidden" name="uniqueId" value="${team.uniqueId}">
+                                                        <input type="hidden" name="quizCode" value="${selectedQuiz}">
+                                                        <input type="hidden" name="action" value="eliminate">
+                                                        <button type="submit" class="btn btn-sm btn-outline" title="Eliminate Team"
+                                                                style="padding: 0.3rem 0.6rem; font-size: 0.75rem; color: #ef4444; border-color: #ef4444;"
+                                                                onclick="return confirm('Mark team ${team.uniqueId} (${team.collegeName}) as Eliminated? They will no longer be scored in subsequent rounds.')">
+                                                            Eliminate
+                                                        </button>
+                                                    </form>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </c:if>
                                         <form action="${pageContext.request.contextPath}/admin/resend-email" method="POST" style="display:inline;">
                                             <input type="hidden" name="uniqueId" value="${team.uniqueId}">
                                             <input type="hidden" name="quiz" value="${selectedQuiz}">
@@ -357,7 +406,7 @@
                         </c:forEach>
                         <c:if test="${empty teams}">
                             <tr>
-                                <td colspan="7" style="text-align: center; padding: 2rem; color: var(--gray-500);">
+                                <td colspan="8" style="text-align: center; padding: 2rem; color: var(--gray-500);">
                                     No teams registered for <c:out value="${selectedQuiz}"/> yet.
                                 </td>
                             </tr>
@@ -369,12 +418,144 @@
 
     </div><!-- /page-container -->
 
+    <c:if test="${selectedQuiz == 'BIZWIZX'}">
+        <!-- Elimination Modal for BIZWIZX -->
+        <div id="eliminationModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.75); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+            <div class="glass-panel" style="max-width: 750px; width: 92%; max-height: 85vh; overflow-y: auto; background: #1a1a2e; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 2rem; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+                <div class="d-flex justify-between align-center mb-3">
+                    <div>
+                        <h3 style="margin: 0; color: #fff;" id="eliminationModalTitle">Team Elimination</h3>
+                        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: var(--gray-400);">
+                            Select teams to eliminate. Eliminated teams will no longer appear for scoring in subsequent rounds.
+                        </p>
+                    </div>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="closeEliminationModal()" style="font-size: 1.2rem; line-height: 1; padding: 0.2rem 0.6rem; color: #fff;">&times;</button>
+                </div>
+
+                <form id="eliminationForm" action="${pageContext.request.contextPath}/admin/eliminate-teams" method="POST">
+                    <input type="hidden" name="quizCode" value="BIZWIZX">
+                    <input type="hidden" name="action" id="eliminationAction" value="eliminate">
+
+                    <div style="max-height: 350px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; margin-bottom: 1.5rem;">
+                        <table class="themed-table" style="margin: 0;">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40px; text-align: center;">
+                                        <input type="checkbox" id="selectAllEliminate" onchange="toggleSelectAll(this)" style="cursor: pointer;">
+                                    </th>
+                                    <th>Unique ID</th>
+                                    <th>College</th>
+                                    <th>Team Lead</th>
+                                    <th>Total Points</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:forEach var="team" items="${teams}">
+                                    <tr>
+                                        <td style="text-align: center;">
+                                            <input type="checkbox" name="teamIds" value="${team.uniqueId}" class="team-checkbox" data-eliminated="${team.eliminated}" style="cursor: pointer;">
+                                        </td>
+                                        <td><strong style="color: var(--purple-700);"><c:out value="${team.uniqueId}"/></strong></td>
+                                        <td><c:out value="${team.collegeName}"/></td>
+                                        <td><c:out value="${team.teamLeadName}"/></td>
+                                        <td><strong style="color: var(--gold-700);"><c:out value="${team.totalPoints}"/></strong></td>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${team.eliminated}">
+                                                    <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); font-size: 0.75rem; padding: 0.2rem 0.4rem; border-radius: 4px;">Eliminated</span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <span class="badge" style="background: rgba(34, 197, 94, 0.15); color: #16a34a; border: 1px solid rgba(34, 197, 94, 0.3); font-size: 0.75rem; padding: 0.2rem 0.4rem; border-radius: 4px;">Active</span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-between align-center flex-wrap gap-sm">
+                        <div class="d-flex gap-sm">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="selectOnlyActive()">Select Active</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="selectOnlyEliminated()">Select Eliminated</button>
+                        </div>
+                        <div class="d-flex gap-sm">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="submitElimination('eliminate')">
+                                Eliminate Selected
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm" onclick="submitElimination('restore')">
+                                Restore Selected
+                            </button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="closeEliminationModal()">Cancel</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </c:if>
+
     <!-- Footer -->
     <footer class="site-footer">
         <span class="footer-brand">PRAGMATRIX 2026</span> &mdash; Admin Dashboard
     </footer>
 
     <script>
+    /* Elimination Modal Handlers */
+    function openEliminationModal(roundNum, roundName) {
+        var modal = document.getElementById('eliminationModal');
+        var title = document.getElementById('eliminationModalTitle');
+        if (title) {
+            title.textContent = 'Eliminate Teams — Round ' + roundNum + ' (' + roundName + ')';
+        }
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+
+    function closeEliminationModal() {
+        var modal = document.getElementById('eliminationModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    function toggleSelectAll(masterCheckbox) {
+        var checkboxes = document.querySelectorAll('.team-checkbox');
+        checkboxes.forEach(function(cb) {
+            cb.checked = masterCheckbox.checked;
+        });
+    }
+
+    function selectOnlyActive() {
+        var checkboxes = document.querySelectorAll('.team-checkbox');
+        checkboxes.forEach(function(cb) {
+            cb.checked = (cb.getAttribute('data-eliminated') === 'false');
+        });
+    }
+
+    function selectOnlyEliminated() {
+        var checkboxes = document.querySelectorAll('.team-checkbox');
+        checkboxes.forEach(function(cb) {
+            cb.checked = (cb.getAttribute('data-eliminated') === 'true');
+        });
+    }
+
+    function submitElimination(action) {
+        var checked = document.querySelectorAll('.team-checkbox:checked');
+        if (checked.length === 0) {
+            alert('Please select at least one team.');
+            return;
+        }
+        var actionText = (action === 'eliminate') ? 'eliminate' : 'restore to active';
+        if (!confirm('Are you sure you want to ' + actionText + ' ' + checked.length + ' selected team(s)?')) {
+            return;
+        }
+        document.getElementById('eliminationAction').value = action;
+        document.getElementById('eliminationForm').submit();
+    }
+
     /* Toggle round edit form */
     function toggleEdit(roundId) {
         var form = document.getElementById('edit-form-' + roundId);
@@ -401,31 +582,33 @@
         var searchInput = document.getElementById('team-search');
         var timer;
 
-        searchInput.addEventListener('input', function() {
-            clearTimeout(timer);
-            var query = this.value.trim();
-            var quiz = this.getAttribute('data-quiz');
-
-            timer = setTimeout(function() {
-                if (query.length === 0) {
-                    /* Reload without search */
-                    window.location.href = '${pageContext.request.contextPath}/admin/dashboard?quiz=' + quiz;
-                    return;
-                }
-                window.location.href = '${pageContext.request.contextPath}/admin/dashboard?quiz=' + quiz + '&search=' + encodeURIComponent(query);
-            }, 600);
-        });
-
-        /* Handle Enter key */
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
                 clearTimeout(timer);
                 var query = this.value.trim();
                 var quiz = this.getAttribute('data-quiz');
-                window.location.href = '${pageContext.request.contextPath}/admin/dashboard?quiz=' + quiz +
-                    (query ? '&search=' + encodeURIComponent(query) : '');
-            }
-        });
+
+                timer = setTimeout(function() {
+                    if (query.length === 0) {
+                        /* Reload without search */
+                        window.location.href = '${pageContext.request.contextPath}/admin/dashboard?quiz=' + quiz;
+                        return;
+                    }
+                    window.location.href = '${pageContext.request.contextPath}/admin/dashboard?quiz=' + quiz + '&search=' + encodeURIComponent(query);
+                }, 600);
+            });
+
+            /* Handle Enter key */
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    clearTimeout(timer);
+                    var query = this.value.trim();
+                    var quiz = this.getAttribute('data-quiz');
+                    window.location.href = '${pageContext.request.contextPath}/admin/dashboard?quiz=' + quiz +
+                        (query ? '&search=' + encodeURIComponent(query) : '');
+                }
+            });
+        }
     })();
 
     /* Auto-dismiss alerts after 5 seconds */

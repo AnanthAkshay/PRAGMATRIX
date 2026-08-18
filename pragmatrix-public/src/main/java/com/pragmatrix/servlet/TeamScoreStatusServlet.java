@@ -90,6 +90,7 @@ public class TeamScoreStatusServlet extends HttpServlet {
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("rounds", roundData);
             result.put("totalPoints", totalPoints);
+            result.put("isEliminated", team.isEliminated());
             result.put("lastUpdated", System.currentTimeMillis());
 
             resp.setContentType("application/json");
