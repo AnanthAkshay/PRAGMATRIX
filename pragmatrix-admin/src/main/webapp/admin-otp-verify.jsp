@@ -20,10 +20,7 @@
 <body class="admin-auth-body">
 
     <div class="auth-page-wrapper">
-        <!-- Full Header Branding Block -->
-        <jsp:include page="/includes/header-branding.jsp" />
-
-        <!-- OTP Verify Form Card -->
+        <!-- Centered OTP Verify Form Card (No Header Branding / No Logo) -->
         <div class="auth-card-container">
             <div class="centered-form-card glass-panel">
                 <div class="form-card-header">
@@ -86,7 +83,7 @@
 
                 <div class="form-footer" style="display: flex; justify-content: space-between; align-items: center;">
                     <a href="${pageContext.request.contextPath}/login">&larr; Return to Admin Login</a>
-                    <a href="${pageContext.request.contextPath}/">&larr; Back to Home</a>
+                    <a href="${pageContext.request.contextPath}/admin">&larr; Back to Home</a>
                 </div>
             </div>
         </div>
