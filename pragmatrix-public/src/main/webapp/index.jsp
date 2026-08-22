@@ -14,6 +14,88 @@
     <section class="hero-landing">
         <jsp:include page="/includes/header-branding.jsp" />
 
+        <!-- ===== COUNTDOWN BANNER ===== -->
+        <div id="live-countdown-banner" class="countdown-banner" style="display: none;">
+            <div class="countdown-banner-inner">
+                <div class="countdown-badge">
+                    <span class="pulse-icon"></span> Live Event Notice
+                </div>
+                <div class="countdown-title">
+                    PRAGMATRIX 2026 goes live on <strong>August 24, 2026 at 8:00 AM IST</strong>
+                </div>
+                <div class="countdown-timer">
+                    <div class="timer-segment">
+                        <span id="cd-days" class="timer-val">00</span>
+                        <span class="timer-lbl">Days</span>
+                    </div>
+                    <span class="timer-sep">:</span>
+                    <div class="timer-segment">
+                        <span id="cd-hours" class="timer-val">00</span>
+                        <span class="timer-lbl">Hours</span>
+                    </div>
+                    <span class="timer-sep">:</span>
+                    <div class="timer-segment">
+                        <span id="cd-minutes" class="timer-val">00</span>
+                        <span class="timer-lbl">Mins</span>
+                    </div>
+                    <span class="timer-sep">:</span>
+                    <div class="timer-segment">
+                        <span id="cd-seconds" class="timer-val">00</span>
+                        <span class="timer-lbl">Secs</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            (function() {
+                // August 24, 2026 8:00 AM IST = 02:30:00 UTC (Fixed UTC timestamp)
+                var TARGET_TIMESTAMP = new Date("2026-08-24T08:00:00+05:30").getTime();
+
+                function updateCountdown() {
+                    var banner = document.getElementById('live-countdown-banner');
+                    if (!banner) return;
+
+                    var now = Date.now();
+                    var diff = TARGET_TIMESTAMP - now;
+
+                    if (diff <= 0) {
+                        banner.style.display = 'none';
+                        return;
+                    }
+
+                    var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    var minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    var seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                    var dEl = document.getElementById('cd-days');
+                    var hEl = document.getElementById('cd-hours');
+                    var mEl = document.getElementById('cd-minutes');
+                    var sEl = document.getElementById('cd-seconds');
+
+                    if (dEl) dEl.textContent = String(days).padStart(2, '0');
+                    if (hEl) hEl.textContent = String(hours).padStart(2, '0');
+                    if (mEl) mEl.textContent = String(minutes).padStart(2, '0');
+                    if (sEl) sEl.textContent = String(seconds).padStart(2, '0');
+
+                    banner.style.display = 'block';
+                }
+
+                updateCountdown();
+                var timerInterval = setInterval(function() {
+                    var now = Date.now();
+                    if (TARGET_TIMESTAMP - now <= 0) {
+                        clearInterval(timerInterval);
+                        var banner = document.getElementById('live-countdown-banner');
+                        if (banner) banner.style.display = 'none';
+                    } else {
+                        updateCountdown();
+                    }
+                }, 1000);
+            })();
+        </script>
+
         <div class="hero-buttons">
             <a href="${pageContext.request.contextPath}/team-login" class="btn btn-primary btn-lg" id="btn-team-login">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
