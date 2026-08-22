@@ -16,85 +16,32 @@
 
         <!-- ===== COUNTDOWN BANNER ===== -->
         <div id="live-countdown-banner" class="countdown-banner" style="display: none;">
-            <div class="countdown-banner-inner">
-                <div class="countdown-badge">
-                    <span class="pulse-icon"></span> Live Event Notice
+            <div class="countdown-banner-title">
+                <span class="live-dot"></span>
+                PRAGMATRIX 2026 goes live on August 24, 2026 at 8:00 AM
+            </div>
+            <div class="countdown-grid">
+                <div class="countdown-box">
+                    <div class="countdown-number" id="countdown-days">00</div>
+                    <div class="countdown-label">Days</div>
                 </div>
-                <div class="countdown-title">
-                    PRAGMATRIX 2026 goes live on <strong>August 24, 2026 at 8:00 AM IST</strong>
+                <div class="countdown-colon">:</div>
+                <div class="countdown-box">
+                    <div class="countdown-number" id="countdown-hours">00</div>
+                    <div class="countdown-label">Hours</div>
                 </div>
-                <div class="countdown-timer">
-                    <div class="timer-segment">
-                        <span id="cd-days" class="timer-val">00</span>
-                        <span class="timer-lbl">Days</span>
-                    </div>
-                    <span class="timer-sep">:</span>
-                    <div class="timer-segment">
-                        <span id="cd-hours" class="timer-val">00</span>
-                        <span class="timer-lbl">Hours</span>
-                    </div>
-                    <span class="timer-sep">:</span>
-                    <div class="timer-segment">
-                        <span id="cd-minutes" class="timer-val">00</span>
-                        <span class="timer-lbl">Mins</span>
-                    </div>
-                    <span class="timer-sep">:</span>
-                    <div class="timer-segment">
-                        <span id="cd-seconds" class="timer-val">00</span>
-                        <span class="timer-lbl">Secs</span>
-                    </div>
+                <div class="countdown-colon">:</div>
+                <div class="countdown-box">
+                    <div class="countdown-number" id="countdown-minutes">00</div>
+                    <div class="countdown-label">Mins</div>
+                </div>
+                <div class="countdown-colon">:</div>
+                <div class="countdown-box">
+                    <div class="countdown-number" id="countdown-seconds">00</div>
+                    <div class="countdown-label">Secs</div>
                 </div>
             </div>
         </div>
-
-        <script>
-            (function() {
-                // August 24, 2026 8:00 AM IST = 02:30:00 UTC (Fixed UTC timestamp)
-                var TARGET_TIMESTAMP = new Date("2026-08-24T08:00:00+05:30").getTime();
-
-                function updateCountdown() {
-                    var banner = document.getElementById('live-countdown-banner');
-                    if (!banner) return;
-
-                    var now = Date.now();
-                    var diff = TARGET_TIMESTAMP - now;
-
-                    if (diff <= 0) {
-                        banner.style.display = 'none';
-                        return;
-                    }
-
-                    var days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                    var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    var minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                    var seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-                    var dEl = document.getElementById('cd-days');
-                    var hEl = document.getElementById('cd-hours');
-                    var mEl = document.getElementById('cd-minutes');
-                    var sEl = document.getElementById('cd-seconds');
-
-                    if (dEl) dEl.textContent = String(days).padStart(2, '0');
-                    if (hEl) hEl.textContent = String(hours).padStart(2, '0');
-                    if (mEl) mEl.textContent = String(minutes).padStart(2, '0');
-                    if (sEl) sEl.textContent = String(seconds).padStart(2, '0');
-
-                    banner.style.display = 'block';
-                }
-
-                updateCountdown();
-                var timerInterval = setInterval(function() {
-                    var now = Date.now();
-                    if (TARGET_TIMESTAMP - now <= 0) {
-                        clearInterval(timerInterval);
-                        var banner = document.getElementById('live-countdown-banner');
-                        if (banner) banner.style.display = 'none';
-                    } else {
-                        updateCountdown();
-                    }
-                }, 1000);
-            })();
-        </script>
 
         <div class="hero-buttons">
             <a href="${pageContext.request.contextPath}/team-login" class="btn btn-primary btn-lg" id="btn-team-login">
@@ -138,5 +85,54 @@
         <span class="footer-brand">PRAGMATRIX 2026</span> &mdash; Applied Management Carnival &bull; All rights reserved.
     </footer>
 
+    <!-- ===== COUNTDOWN BANNER SCRIPT ===== -->
+    <script>
+        (function() {
+            // Target: August 24, 2026 8:00 AM IST (UTC+5:30) = 02:30:00 UTC on Aug 24, 2026
+            const TARGET_TIME = Date.UTC(2026, 7, 24, 2, 30, 0);
+            const banner = document.getElementById('live-countdown-banner');
+            const elDays = document.getElementById('countdown-days');
+            const elHours = document.getElementById('countdown-hours');
+            const elMinutes = document.getElementById('countdown-minutes');
+            const elSeconds = document.getElementById('countdown-seconds');
+
+            function updateCountdown() {
+                const now = Date.now();
+                const diff = TARGET_TIME - now;
+
+                if (diff <= 0) {
+                    if (banner) {
+                        banner.style.display = 'none';
+                    }
+                    return false;
+                }
+
+                if (banner && banner.style.display === 'none') {
+                    banner.style.display = 'block';
+                }
+
+                const totalSec = Math.floor(diff / 1000);
+                const days = Math.floor(totalSec / 86400);
+                const hours = Math.floor((totalSec % 86400) / 3600);
+                const minutes = Math.floor((totalSec % 3600) / 60);
+                const seconds = totalSec % 60;
+
+                if (elDays) elDays.textContent = String(days).padStart(2, '0');
+                if (elHours) elHours.textContent = String(hours).padStart(2, '0');
+                if (elMinutes) elMinutes.textContent = String(minutes).padStart(2, '0');
+                if (elSeconds) elSeconds.textContent = String(seconds).padStart(2, '0');
+
+                return true;
+            }
+
+            if (updateCountdown()) {
+                const timer = setInterval(function() {
+                    if (!updateCountdown()) {
+                        clearInterval(timer);
+                    }
+                }, 1000);
+            }
+        })();
+    </script>
 </body>
 </html>
