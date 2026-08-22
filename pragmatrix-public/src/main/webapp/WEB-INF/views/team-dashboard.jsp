@@ -245,6 +245,12 @@
                                 </td>
                                 <td>
                                     <c:choose>
+                                        <c:when test="${team.quizCode == 'VORTEX' && round.roundNumber == 4 && !team.advancedToFinale}">
+                                            <span class="score-pending" style="font-size: 0.85rem;">Not Advanced</span>
+                                        </c:when>
+                                        <c:when test="${!round.finished}">
+                                            <span class="score-pending" style="font-size: 0.85rem;">Round in progress &mdash; results available after judging</span>
+                                        </c:when>
                                         <c:when test="${hasScore || (not empty critScores && fn:length(critScores) > 0)}">
                                             <button type="button" class="btn btn-sm btn-primary"
                                                     onclick="openScoresheetModal(${round.roundNumber})"
@@ -257,10 +263,7 @@
                                             <button type="button" class="btn btn-sm btn-outline"
                                                     onclick="openCriteriaModal(${round.roundNumber})"
                                                     style="color: var(--purple-700); border-color: var(--purple-600); padding: 0.25rem 0.6rem; font-size: 0.8rem;">
-                                                <c:choose>
-                                                    <c:when test="${round.roundNumber == 4 && !team.advancedToFinale}">View Status &amp; Criteria</c:when>
-                                                    <c:otherwise>View Judging Criteria</c:otherwise>
-                                                </c:choose>
+                                                View Judging Criteria
                                             </button>
                                         </c:when>
                                         <c:otherwise>
@@ -663,11 +666,14 @@
                         var criteria = r.judgingCriteria || '\u2014';
 
                         var actionButton = '';
-                        if (r.hasScore || (r.isFinished && r.points !== null)) {
+                        if (isNotAdvancedVortex) {
+                            actionButton = '<span class="score-pending" style="font-size: 0.85rem;">Not Advanced</span>';
+                        } else if (!r.isFinished) {
+                            actionButton = '<span class="score-pending" style="font-size: 0.85rem;">Round in progress &mdash; results available after judging</span>';
+                        } else if (r.hasScore || (r.isFinished && r.points !== null)) {
                             actionButton = '<button type="button" class="btn btn-sm btn-primary" onclick="openScoresheetModal(' + r.roundNumber + ')" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>View Scoresheet</button>';
                         } else if (isVortex) {
-                            var btnLabel = isNotAdvancedVortex ? 'View Status & Criteria' : 'View Judging Criteria';
-                            actionButton = '<button type="button" class="btn btn-sm btn-outline" onclick="openCriteriaModal(' + r.roundNumber + ')" style="color: var(--purple-700); border-color: var(--purple-600); padding: 0.25rem 0.6rem; font-size: 0.8rem;">' + btnLabel + '</button>';
+                            actionButton = '<button type="button" class="btn btn-sm btn-outline" onclick="openCriteriaModal(' + r.roundNumber + ')" style="color: var(--purple-700); border-color: var(--purple-600); padding: 0.25rem 0.6rem; font-size: 0.8rem;">View Judging Criteria</button>';
                         } else {
                             actionButton = '<span class="score-pending" style="font-size: 0.85rem;">Not yet scored</span>';
                         }

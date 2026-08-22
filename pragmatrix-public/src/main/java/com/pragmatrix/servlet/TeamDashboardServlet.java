@@ -66,16 +66,28 @@ public class TeamDashboardServlet extends HttpServlet {
                 }
             }
 
-            // If VORTEX, load VORTEX judging criteria structure and team detailed scores for read-only view
+            // If VORTEX, load VORTEX judging criteria structure and team detailed scores for read-only view ONLY if round is Finished
             if ("VORTEX".equalsIgnoreCase(team.getQuizCode())) {
+                Map<Integer, Round> roundMapByNumber = new HashMap<>();
+                for (Round r : rounds) {
+                    roundMapByNumber.put(r.getRoundNumber(), r);
+                }
+
                 List<VortexRound> vRounds = vortexDAO.getAllRounds();
                 Map<Integer, VortexRound> vortexRoundsMap = new HashMap<>();
                 Map<Integer, Map<Integer, Double>> teamDetailedScores = new HashMap<>();
                 for (VortexRound vr : vRounds) {
-                    vortexRoundsMap.put(vr.getDisplayOrder(), vr);
-                    // Strictly scoped to this logged-in team's own data only
-                    Map<Integer, Double> cScores = vortexDAO.getTeamScoresForRound(teamCode, vr.getRoundId());
-                    teamDetailedScores.put(vr.getDisplayOrder(), cScores);
+                    Round r = roundMapByNumber.get(vr.getDisplayOrder());
+                    boolean isFinished = (r != null && r.isFinished());
+                    boolean isFinaleAndNotAdvanced = (vr.getDisplayOrder() == 4 && !team.isAdvancedToFinale());
+
+                    // Server-side gating: Only serve criteria & scores if round is finished (and if round 4, advanced to finale)
+                    if (isFinished && !isFinaleAndNotAdvanced) {
+                        vortexRoundsMap.put(vr.getDisplayOrder(), vr);
+                        // Strictly scoped to this logged-in team's own data only
+                        Map<Integer, Double> cScores = vortexDAO.getTeamScoresForRound(teamCode, vr.getRoundId());
+                        teamDetailedScores.put(vr.getDisplayOrder(), cScores);
+                    }
                 }
                 req.setAttribute("vortexRoundsMap", vortexRoundsMap);
                 req.setAttribute("teamDetailedScores", teamDetailedScores);

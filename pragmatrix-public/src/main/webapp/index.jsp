@@ -18,7 +18,7 @@
         <div id="live-countdown-banner" class="countdown-banner" style="display: none;">
             <div class="countdown-banner-title">
                 <span class="live-dot"></span>
-                PRAGMATRIX 2026 goes live on August 24, 2026 at 8:00 AM
+                PRAGMATRIX 2026 goes live on August 24, 2026 at 9:00 AM
             </div>
             <div class="countdown-grid">
                 <div class="countdown-box">
@@ -88,8 +88,8 @@
     <!-- ===== COUNTDOWN BANNER SCRIPT ===== -->
     <script>
         (function() {
-            // Target: August 24, 2026 8:00 AM IST (UTC+5:30) = 02:30:00 UTC on Aug 24, 2026
-            const TARGET_TIME = Date.UTC(2026, 7, 24, 2, 30, 0);
+            // Target: August 24, 2026 9:00 AM IST (UTC+5:30) = 03:30:00 UTC on Aug 24, 2026
+            const TARGET_TIME = Date.UTC(2026, 7, 24, 3, 30, 0);
             const banner = document.getElementById('live-countdown-banner');
             const elDays = document.getElementById('countdown-days');
             const elHours = document.getElementById('countdown-hours');
