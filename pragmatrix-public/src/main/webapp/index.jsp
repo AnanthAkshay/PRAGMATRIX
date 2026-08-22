@@ -45,12 +45,12 @@
 
         <div class="hero-buttons">
             <a href="${pageContext.request.contextPath}/team-login" class="btn btn-primary btn-lg" id="btn-team-login">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg id="btn-login-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
                     <polyline points="10 17 15 12 10 7"/>
                     <line x1="15" y1="12" x2="3" y2="12"/>
                 </svg>
-                Team Login
+                <span id="btn-login-label">Team Login</span>
             </a>
         </div>
     </section>
@@ -85,12 +85,14 @@
         <span class="footer-brand">PRAGMATRIX 2026</span> &mdash; Applied Management Carnival &bull; All rights reserved.
     </footer>
 
-    <!-- ===== COUNTDOWN BANNER SCRIPT ===== -->
+    <!-- ===== COUNTDOWN BANNER & LOGIN LOCK SCRIPT ===== -->
     <script>
         (function() {
             // Target: August 24, 2026 9:00 AM IST (UTC+5:30) = 03:30:00 UTC on Aug 24, 2026
             const TARGET_TIME = Date.UTC(2026, 7, 24, 3, 30, 0);
             const banner = document.getElementById('live-countdown-banner');
+            const loginBtn = document.getElementById('btn-team-login');
+            const loginLabel = document.getElementById('btn-login-label');
             const elDays = document.getElementById('countdown-days');
             const elHours = document.getElementById('countdown-hours');
             const elMinutes = document.getElementById('countdown-minutes');
@@ -104,11 +106,23 @@
                     if (banner) {
                         banner.style.display = 'none';
                     }
+                    if (loginBtn) {
+                        loginBtn.classList.remove('btn-locked-state');
+                    }
+                    if (loginLabel) {
+                        loginLabel.textContent = 'Team Login';
+                    }
                     return false;
                 }
 
                 if (banner && banner.style.display === 'none') {
                     banner.style.display = 'block';
+                }
+                if (loginBtn && !loginBtn.classList.contains('btn-locked-state')) {
+                    loginBtn.classList.add('btn-locked-state');
+                }
+                if (loginLabel) {
+                    loginLabel.textContent = 'Team Login (Opens Aug 24 @ 9:00 AM)';
                 }
 
                 const totalSec = Math.floor(diff / 1000);

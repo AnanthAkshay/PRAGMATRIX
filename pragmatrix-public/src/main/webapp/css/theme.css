@@ -1915,3 +1915,16 @@ table.themed-table tr.rank-3 td {
     }
 }
 
+/* Locked State Button */
+.btn-locked-state {
+    background: linear-gradient(135deg, rgba(43, 10, 74, 0.9), rgba(27, 6, 48, 0.95)) !important;
+    border: 1px solid var(--gold-500) !important;
+    color: var(--gold-300) !important;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.15);
+}
+
+.btn-locked-state:hover {
+    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3) !important;
+    border-color: var(--gold-400) !important;
+}
+
