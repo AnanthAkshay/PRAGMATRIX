@@ -88,6 +88,9 @@
     <!-- ===== COUNTDOWN BANNER & LOGIN LOCK SCRIPT ===== -->
     <script>
         (function() {
+            // Set to true before event day to re-enable the Aug 24 9:00 AM IST lock
+            const LOCK_ENABLED = false;
+
             // Target: August 24, 2026 9:00 AM IST (UTC+5:30) = 03:30:00 UTC on Aug 24, 2026
             const TARGET_TIME = Date.UTC(2026, 7, 24, 3, 30, 0);
             const banner = document.getElementById('live-countdown-banner');
@@ -118,11 +121,21 @@
                 if (banner && banner.style.display === 'none') {
                     banner.style.display = 'block';
                 }
-                if (loginBtn && !loginBtn.classList.contains('btn-locked-state')) {
-                    loginBtn.classList.add('btn-locked-state');
-                }
-                if (loginLabel) {
-                    loginLabel.textContent = 'Team Login (Opens Aug 24 @ 9:00 AM)';
+
+                if (LOCK_ENABLED) {
+                    if (loginBtn && !loginBtn.classList.contains('btn-locked-state')) {
+                        loginBtn.classList.add('btn-locked-state');
+                    }
+                    if (loginLabel) {
+                        loginLabel.textContent = 'Team Login (Opens Aug 24 @ 9:00 AM)';
+                    }
+                } else {
+                    if (loginBtn) {
+                        loginBtn.classList.remove('btn-locked-state');
+                    }
+                    if (loginLabel) {
+                        loginLabel.textContent = 'Team Login';
+                    }
                 }
 
                 const totalSec = Math.floor(diff / 1000);

@@ -24,12 +24,15 @@ import java.time.ZonedDateTime;
 @WebServlet(name = "TeamLoginServlet", urlPatterns = {"/team-login"})
 public class TeamLoginServlet extends HttpServlet {
 
+    // Set to true before event day to re-enable the Aug 24 9:00 AM IST lock
+    private static final boolean LOCK_ENABLED = false;
+
     private static final Instant UNLOCK_TIME = ZonedDateTime.of(2026, 8, 24, 9, 0, 0, 0, ZoneId.of("Asia/Kolkata")).toInstant();
 
     private final TeamDAO teamDAO = new TeamDAO();
 
     private boolean isLocked() {
-        return Instant.now().isBefore(UNLOCK_TIME);
+        return LOCK_ENABLED && Instant.now().isBefore(UNLOCK_TIME);
     }
 
     @Override
